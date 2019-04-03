@@ -1,216 +1,121 @@
 /* Rexx program
+
    sfadbu.rex
+   Base code	02/14/2019
+   Revision 1	02/14/2019
+
+   This is a special function Rexx program that is used to make backup
+   copies of the Quicken database. We will make two copies to two dif-
+   ferent locations. We get a list of the files in the Quicken backup
+   directory/folder and if a file in the source location does not exist
+   in the target location, then we will make a copy.
    
-   Base code	04/02/2019
-   Revision 1	
-
-   This program is used to make backup copies of files. A flat file is used to
-   provide the source and target locations.   
+   When this operation is complete, we make a copy of the KeePass data-
+   base to the two locations as well.
    
-*/ 
+   Set up some variables to make it easier to alter both the source and
+   target locations as well as the file search pattern.
+*/
+   
 
-/*
-   Define some search strings and their lenght for use further down in the
-   code. These could change over time so we have to keep an eye on the 
-   Acorns Report. Could also have an issue if the security name(s) should 
-   change. 
+
+SourceDirectory = "C:\Quicken Backup\"
+TargetDirectory1 = "C:\Users\Bill\Google Drive\Q_Data\"
+TargetDirectory2 = "D:\Asus SyncFolder\Financial\Quicken Archive\"
+
+FilePattern = "*.QDF"
+
+Backup = SourceDirectory || FilePattern
+Q_Data = TargetDirectory1 || FilePattern
+Archive = TargetDirectory2 || FilePattern
+
+/*	Use the SysFileTree function to obtain the contents of the source and
+    two target directories. The results are placed into STEM variables
+    which will allow us to loop through the file lists.
 */
 
-SrchStr1 = "Securities Bought"
-lenSrchStr1 = length(SrchStr1)
-SrchStr2 = "Total Securities Bought"
-lenSrchStr2 = length(SrchStr2)
-SrchStr3 = "Acorns Securities, LLC — Member FINRA/SIPC"
-lenSrchStr3 = length(SrchStr3)
-SrchStr4 = "Bought"
-lenSrchStr4 = length(SrchStr4)
-SrchStr5 = "Vanguard FTSE Developed Markets ETF"
-lenSrchStr5 = length(SrchStr5)
+call SysFileTree Backup, "SrcQB", "FO"
+call SysFileTree Q_Data, "Tg1QB", "FO"
+call SysFileTree Archive, "Tg2QB", "FO"
 
 /*
-   Get the names of the input/output files.  Output file should be a QIF file
-   so that Quicken will recognize the file for import.
+   Loop through the source names. If we do not find the source name
+   in the target list, then the file needs to be copied.
+   We will do this twice because we are making two copies of the backup
+   files to two different locations.
+   
+   We will use the SysFileCopy function to make our copies. If the file
+   already exists in the target location, we will overwrite it.
 */
 
-say "Input file name:"
-pull FileInName
-say "Output file name:"
-pull FileOutName
+do i = 1 to SrcQB.0
 
-/* Create handles for our input and output files.                            */
-
-inTXTfile = .stream~new(FileInName)
-ouQIFfile = .stream~new(FileOutName)
-
-/*
-   We will read two files that contain security names. We had to do this
-   because the security name in the Acorns file is an abbreviated name of the
-   actual name that Quicken utilizes. Not all entries have to be translated,
-   but we have all entries defined to keep the logic straight forward. These
-   files may have to be updated if the underlying securities change.
-*/
-
-/* Create handles for our securities mapping files.                          */
-
-inAcornSecurities = .stream~new('AcornSecurities.txt')
-inQuickenSecurities = .stream~new('QuickenSecurities.txt')
-
-/* Open up the security mapping files.                                       */
-
-inAcornSecurities~open("READ")
-inQuickenSecurities~open("READ")
-
-/*
-   Read entries from the Acorns Securities file and load them into the
-   pdfSec. stem variable.
-*/
-
-signal on notready name endAcorns
-countAcorns = 0
-
-do forever
-  inBuff=inAcornSecurities~linein
-  countAcorns = countAcorns + 1
-  pdfSec.countAcorns = strip(inBuff,"B")
-end
-
-endAcorns:
-
-inAcornSecurities~close
-
-/*
-   Read entries from the Quicken Securities file and load them into the
-   quiSec. stem variable.
-*/
-
-signal on notready name endQuicken
-countQuicken = 0
-
-do forever
-  inBuff=inQuickenSecurities~linein
-  countQuicken = countQuicken + 1
-  quiSec.countQuicken = strip(inBuff,"B")
-end
-
-endQuicken:
-
-inQuickenSecurities~close
-
-/*
-   Check the record count from each of the security files. The count
-   should match. If it doesn't then we issue a message and halt the
-   execution.
-*/
-
-if countAcorns = countQuicken then
-  do
-    NumSecurities = countAcorns
-    say "Number of securities that will be mapped is" NumSecurities
-  end
-else
-  do
-    say "Number of securities in the mapping files does not match"
-    say "Acorns =" countAcorns "    Quicken =" countQuicken
-    exit
-  end
+  parse var SrcQB.i . "\" . "\" Src1
   
-/* Open up both the input and output files.                                  */
-
-inTXTfile~open("READ")
-ouQIFfile~open("REPLACE")
-
-/* We will use the signal directive to catch any errors and handle them.     */
-
-signal on notready name eofAllDone
-
-/* Loop through the input file looking for the securities bought section     */
-
-do forever
-  inBuff=inTXTfile~linein
-  if substr(inBuff,1,lenSrchStr1) = SrchStr1 then leave
-end
-
-/*
-   Next DO loop isolates only those lines which detail a bought security.
-   We screen off all other lines. Currently the description of one of the 
-   securities stradles two lines and we handle that the last if statement.
-   When that situation occurs, we read the next two lines and then put the
-   three pieces together. All of the lines are saved in the TransBuy STEM
-   variable.
-*/
-
-TransCount = 0
-
-do forever
-
-  inBuff=inTXTfile~linein
-  if substr(inBuff,1,lenSrchStr2) = SrchStr2 then leave
-  if substr(inBuff,1,lenSrchStr3) = SrchStr3 then iterate
-  if wordpos(SrchStr4,inBuff) \= 3 then iterate
-
-  if pos(SrchStr5,inBuff,1) \= 0 then
-    do
-      inBuff1=inTXTfile~linein
-      inBuff2=inTXTfile~linein
-      inBuff = inBuff inBuff1 inBuff2
-    end
+  SRCtoTGT = 1
+  
+  do j = 1 to Tg1QB.0
     
-  TransCount = TransCount + 1
-  TransBuy.TransCount = inBuff
-  
-end
-
-/*
-   The first line that we output to the file will tell Quicken what type
-   of QIF file is being imported. The DO loop is used to go through each 
-   buy transaction that is in our STEM variable TransBuy and create a 
-   multiline output for each transaction.
-*/
-
-ouQIFfile~lineout("!Type:Invst")
-
-do JJ = 1 to TransCount
-
-  parse var TransBuy.JJ TransDate . . OtherInfo
-  PosLParen = pos("(",OtherInfo) - 2
-  Security =strip(substr(OtherInfo,1,PosLParen),'B')
-  PosRParen = pos(")",OtherInfo) + 2
-  Pricing = substr(OtherInfo,PosRParen,30)
-  parse var Pricing myQuantity myPrice myAmount
-  myPrice = strip(myPrice,"L","$")
-  myAmount = strip(myAmount,"L","$")
-
-  do KK = 1 to 6
-    if Security = pdfSec.KK then
-      Security = quiSec.KK
+    parse var Tg1QB.j . "\" . "\" . "\" . "\" . "\" Tg11
+    
+    if Src1 = Tg11 then
+      do
+      	SRCtoTGT = 0
+      	leave
+      end
+    
   end
-
-  sayL.1 = "D" || TransDate
-  sayL.2 = "N" || "Buyx"
-  sayL.3 = "Y" || Security
-  sayL.4 = "I" || myPrice
-  sayL.5 = "Q" || myQuantity
-  sayL.6 = "O" || "$0.00"
-  sayL.7 = "L" || "[WJM - Acorns-Cash]"
-  sayL.8 = "T" || myAmount
-  sayL.9 = "U" || myAmount
-  sayL.10 = "$" || myAmount
-  sayL.11 = "^"
   
-  do KK = 1 to 11
-    ouQIFfile~lineout(sayL.KK)
-  end 
+  if SRCtoTGT then
+  	do
+  	  TargetFile = TargetDirectory1 || Src1
+  	  call SysFileCopy SrcQB.i, TargetFile
+  	end
   
 end
 
-/*
-   We will end up here when we have output all of the transactions to
-   our file, or we encountered some type of error.
-*/
+/* Now perform the second loop to copy to the secondary location. */
 
-eofAllDone:
+do i = 1 to SrcQB.0
 
-inTXTfile~close
-ouQIFfile~close
+  parse var SrcQB.i . "\" . "\" Src1
+  
+  SRCtoTGT = 1
+  
+  do j = 1 to Tg2QB.0
+    
+    parse var Tg2QB.j . "\" . "\" . "\" . "\" . "\" Tg21
+    
+    if Src1 = Tg21 then
+      do
+      	SRCtoTGT = 0
+      	leave
+      end
+    
+  end
+  
+  if SRCtoTGT then
+  	do
+  	  TargetFile = TargetDirectory2 || Src1
+  	  call SysFileCopy SrcQB.i, TargetFile
+  	end
+  
+end
+
+/* Added code to back up my KeePass database.                    */
+
+SourceDirectory = "D:\My Documents\KeePassData\"
+TargetDirectory1 = "C:\Users\Bill\Google Drive\Q_Data\"
+TargetDirectory2 = "D:\Asus SyncFolder\Financial\Quicken Archive\"
+
+FilePattern = "MeanyKeePass.kdbx"
+
+Backup = SourceDirectory || FilePattern
+Q_Data = TargetDirectory1 || FilePattern
+Archive = TargetDirectory2 || FilePattern
+
+call SysFileCopy Backup, Q_Data
+
+call SysFileCopy Backup, Archive
 
 exit
