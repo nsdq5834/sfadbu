@@ -40,13 +40,13 @@ end
 eofAllDone:
 
 do jj = 1 to ii
- say inDirList.jj
+ curDir = inDirList.jj
 end
 
-exit
+
 dirCount = 0
-curDir = "D:\Documents"
-call EnumDirect 
+call EnumDirect
+ 
 /*call SysFileTree Backup, "SrcQB", "FO"
 call SysFileTree Q_Data, "Tg1QB", "FO"
 call SysFileTree Archive, "Tg2QB", "FO"
@@ -69,7 +69,7 @@ call SysFileCopy Backup, Archive
 */
 exit
 
-EnumDirect: procedure expose dirCount
+EnumDirect: procedure
 say dirCount
 dirCount = dirCount + 1
 dirList.dirCount = curDir
