@@ -17,27 +17,40 @@
    target locations as well as the file search pattern.
 */
    
-
-
-SourceDirectory = "C:\Quicken Backup\"
-TargetDirectory1 = "C:\Users\Bill\Google Drive\Q_Data\"
-TargetDirectory2 = "D:\Asus SyncFolder\Financial\Quicken Archive\"
-
-FilePattern = "*.QDF"
-
-Backup = SourceDirectory || FilePattern
-Q_Data = TargetDirectory1 || FilePattern
-Archive = TargetDirectory2 || FilePattern
-
 /*	Use the SysFileTree function to obtain the contents of the source and
     two target directories. The results are placed into STEM variables
     which will allow us to loop through the file lists.
 */
+/*trace i */
+say "Input file name:"
+pull FileInName
 
-call SysFileTree Backup, "SrcQB", "FO"
+inTXTfile = .stream~new(FileInName)
+
+signal on notready name eofAllDone
+
+/* Loop through the input file looking for the securities bought section     */
+ii=0
+do forever
+  inBuff = inTXTfile~linein
+  ii = ii + 1
+  inDirList.ii = strip(inBuff,"B")
+end
+
+eofAllDone:
+
+do jj = 1 to ii
+ say inDirList.jj
+end
+
+exit
+dirCount = 0
+curDir = "D:\Documents"
+call EnumDirect 
+/*call SysFileTree Backup, "SrcQB", "FO"
 call SysFileTree Q_Data, "Tg1QB", "FO"
 call SysFileTree Archive, "Tg2QB", "FO"
-
+*/
 /*
    Loop through the source names. If we do not find the source name
    in the target list, then the file needs to be copied.
@@ -48,74 +61,23 @@ call SysFileTree Archive, "Tg2QB", "FO"
    already exists in the target location, we will overwrite it.
 */
 
-do i = 1 to SrcQB.0
-
-  parse var SrcQB.i . "\" . "\" Src1
-  
-  SRCtoTGT = 1
-  
-  do j = 1 to Tg1QB.0
-    
-    parse var Tg1QB.j . "\" . "\" . "\" . "\" . "\" Tg11
-    
-    if Src1 = Tg11 then
-      do
-      	SRCtoTGT = 0
-      	leave
-      end
-    
-  end
-  
-  if SRCtoTGT then
-  	do
-  	  TargetFile = TargetDirectory1 || Src1
-  	  call SysFileCopy SrcQB.i, TargetFile
-  	end
-  
-end
-
-/* Now perform the second loop to copy to the secondary location. */
-
-do i = 1 to SrcQB.0
-
-  parse var SrcQB.i . "\" . "\" Src1
-  
-  SRCtoTGT = 1
-  
-  do j = 1 to Tg2QB.0
-    
-    parse var Tg2QB.j . "\" . "\" . "\" . "\" . "\" Tg21
-    
-    if Src1 = Tg21 then
-      do
-      	SRCtoTGT = 0
-      	leave
-      end
-    
-  end
-  
-  if SRCtoTGT then
-  	do
-  	  TargetFile = TargetDirectory2 || Src1
-  	  call SysFileCopy SrcQB.i, TargetFile
-  	end
-  
-end
-
-/* Added code to back up my KeePass database.                    */
-
-SourceDirectory = "D:\My Documents\KeePassData\"
-TargetDirectory1 = "C:\Users\Bill\Google Drive\Q_Data\"
-TargetDirectory2 = "D:\Asus SyncFolder\Financial\Quicken Archive\"
-
-FilePattern = "MeanyKeePass.kdbx"
-
-Backup = SourceDirectory || FilePattern
-Q_Data = TargetDirectory1 || FilePattern
-Archive = TargetDirectory2 || FilePattern
+/*
 
 call SysFileCopy Backup, Q_Data
 
 call SysFileCopy Backup, Archive
-
+*/
 exit
+
+EnumDirect: procedure expose dirCount
+say dirCount
+dirCount = dirCount + 1
+dirList.dirCount = curDir
+listPat = curDir || "\*.*"
+say listPat
+call SysFileTree listPat, myDir, "D"
+
+say myDir.0
+
+say curDir
+return
