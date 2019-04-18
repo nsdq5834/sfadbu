@@ -21,7 +21,7 @@
     two target directories. The results are placed into STEM variables
     which will allow us to loop through the file lists.
 */
-/*trace i */
+
 say "Input file name:"
 pull FileInName
 
@@ -39,13 +39,14 @@ end
 
 eofAllDone:
 
-do jj = 1 to ii
- curDir = inDirList.jj
-end
-
+/* Set initial directory count to zero.                                      */
 
 dirCount = 0
-call EnumDirect
+
+do jj = 1 to ii
+ curDir = inDirList.jj
+ call EnumDirect
+end
  
 /*call SysFileTree Backup, "SrcQB", "FO"
 call SysFileTree Q_Data, "Tg1QB", "FO"
@@ -69,15 +70,14 @@ call SysFileCopy Backup, Archive
 */
 exit
 
-EnumDirect: procedure
-say dirCount
+
+EnumDirect: procedure expose dirCount curDir
+
 dirCount = dirCount + 1
 dirList.dirCount = curDir
 listPat = curDir || "\*.*"
-say listPat
 call SysFileTree listPat, myDir, "D"
-
-say myDir.0
-
 say curDir
+say "Number of Directories found =" myDir.0
+
 return
