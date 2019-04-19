@@ -22,19 +22,24 @@
     which will allow us to loop through the file lists.
 */
 
-say "Input file name:"
-pull FileInName
+/*say "Input file name:" 
+pull FileInName  */
+
+FileInName = 'SourceDirectories.txt'
 
 inTXTfile = .stream~new(FileInName)
 
+dCount=0
+dirList. = ''
+
 signal on notready name eofAllDone
 
-/* Loop through the input file looking for the securities bought section     */
-ii=0
+/* Loop through the file reading the list of directories to be backed up     */
+
 do forever
   inBuff = inTXTfile~linein
-  ii = ii + 1
-  inDirList.ii = strip(inBuff,"B")
+  dCount = dCount + 1
+  DirToBackup.dCount = strip(inBuff,"B")
 end
 
 eofAllDone:
@@ -43,15 +48,45 @@ eofAllDone:
 
 dirCount = 0
 
-do jj = 1 to ii
- curDir = inDirList.jj
+do dPoint = 1 to dCount
+ curDir = DirToBackup.dPoint
  call EnumDirect
 end
- 
-/*call SysFileTree Backup, "SrcQB", "FO"
-call SysFileTree Q_Data, "Tg1QB", "FO"
-call SysFileTree Archive, "Tg2QB", "FO"
+
+/*
+  At this point we have the base list of directories as well as any sub-
+  directories that are to be backed up.  The next step is to build the necessary
+  search patterns so that we can get a list of files in the source and targetdirectories.
 */
+
+sourceDlist. = ''
+targetDlist. = ''
+
+do sdirCount = 1 to dirCount
+  sourceDlist.sdirCount = dirList.sdirCount || '\*.*'
+  parse var dirList.sdirCount tDrive '\' targetDlist.sdirCount
+  targetDlist.sdirCount = 'D:\Asus Sync Folder\@BU\' || targetDlist.sdirCount || '\*.*'
+  say sourceDlist.sdirCount '->' targetDlist.sdirCount
+end
+
+/*
+  We now have the source and target fine name patterns built. Next step is to obtain
+  a full listing from each directory/folder and then we can compare the lists to de-
+  termine which files will need to be backed up.
+*/
+
+do sdirCount = 1 to dirCount
+  sourcePat = dirList.sdirCount || '\*.*'
+  call SysFileTree sourcePat, SourceFile, "F"
+  
+  if SourceFile.0 > 0 then
+    do SF = 1 to SourceFile.0
+	  parse var SourceFile.SF . . . . curSource .
+	  parse var curSource tDrive '\' TargetFile
+	  TargetFile = 'D:\Asus Sync Folder\@BU\' || TargetFile	  
+	end
+end
+
 /*
    Loop through the source names. If we do not find the source name
    in the target list, then the file needs to be copied.
@@ -71,13 +106,19 @@ call SysFileCopy Backup, Archive
 exit
 
 
-EnumDirect: procedure expose dirCount curDir
+EnumDirect: procedure expose dirCount curDir dirList.
 
 dirCount = dirCount + 1
 dirList.dirCount = curDir
-listPat = curDir || "\*.*"
-call SysFileTree listPat, myDir, "D"
-say curDir
-say "Number of Directories found =" myDir.0
+sourcePat = curDir || "\*.*"
+
+call SysFileTree sourcePat, myDir, "D"
+
+if myDir.0 > 0 then
+
+  do KK = 1 to myDir.0
+    parse var myDir.KK . . . . curDir . 
+    call EnumDirect
+  end
 
 return
