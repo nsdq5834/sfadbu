@@ -76,15 +76,9 @@ end
 */
 
 do sdirCount = 1 to dirCount
-  sourcePat = dirList.sdirCount || '\*.*'
-  call SysFileTree sourcePat, SourceFile, "F"
-  
-  if SourceFile.0 > 0 then
-    do SF = 1 to SourceFile.0
-	  parse var SourceFile.SF . . . . curSource .
-	  parse var curSource tDrive '\' TargetFile
-	  TargetFile = 'D:\Asus Sync Folder\@BU\' || TargetFile	  
-	end
+  call SysFileTree sourceDlist.sdirCount, SFL, 'F' 
+  call SysFileTree targetDlist.sdirCount, TFL, 'F'
+  say 'SFL.0 =' SFL.0 '---' 'TFL.0 =' TFL.0
 end
 
 /*
