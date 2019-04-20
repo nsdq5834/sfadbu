@@ -112,12 +112,13 @@ do sdirCount = 1 to dirCount
   
   if TFL.0 = 0 then
     do cntSFL = 1 to SFL.0
-	  parse var SFL.cntSFL . . . . sourceFile .
+	  parse var SFL.cntSFL . . . . sourceFile
+	  sourceFile = strip(sourceFile,'B')
 	  parse var sourceFile sDrive '\' targetFile
 	  targetFile = 'D:\Asus SyncFolder\@BU\' || targetFile
 	  cpRC = SysFileCopy(sourceFile,targetFile)
-	  /*if cpRC \= 0 then say 'SysFileCopy Error =' cpRC*/
-	end  
+	  if cpRC \= 0 then say 'SysFileCopy Error =' cpRC sourceFile targetFile
+	  end  
   
 
 end
