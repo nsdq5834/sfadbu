@@ -44,7 +44,11 @@ end
 
 eofAllDone:
 
-/* Set initial directory count to zero.                                      */
+/* Set initial directory count to zero.
+   Call the EnumDirect routine to obtain a list of any subdirectories.
+   When we complete this loop, the dirList stem should contail a list
+   of all the directories as well as the subdirectories.   
+*/
 
 dirCount = 0
 
@@ -54,31 +58,68 @@ do dPoint = 1 to dCount
 end
 
 /*
-  At this point we have the base list of directories as well as any sub-
-  directories that are to be backed up.  The next step is to build the necessary
-  search patterns so that we can get a list of files in the source and targetdirectories.
+  Sort the list of directories in dirList into ascending order.
+*/
+
+do oPoint = 1 to dirCount - 1
+  do iPoint = oPoint+1 to dirCount
+    if dirList.oPoint > dirList.iPoint then
+      do
+	    tempDir = dirList.oPoint
+	    dirList.oPoint = dirList.iPoint
+	    dirList.iPoint = tempDir
+	  end  
+  end iPoint
+end oPoint
+
+/*
+  Build the list of source and target directories.
 */
 
 sourceDlist. = ''
 targetDlist. = ''
 
 do sdirCount = 1 to dirCount
-  sourceDlist.sdirCount = dirList.sdirCount || '\*.*'
+  sourceDlist.sdirCount = dirList.sdirCount
   parse var dirList.sdirCount tDrive '\' targetDlist.sdirCount
-  targetDlist.sdirCount = 'D:\Asus Sync Folder\@BU\' || targetDlist.sdirCount || '\*.*'
-  say sourceDlist.sdirCount '->' targetDlist.sdirCount
+  targetDlist.sdirCount = 'D:\Asus SyncFolder\@BU\' || targetDlist.sdirCount
 end
 
 /*
-  We now have the source and target fine name patterns built. Next step is to obtain
-  a full listing from each directory/folder and then we can compare the lists to de-
-  termine which files will need to be backed up.
+  First step is to check and see if the target directory exists. If it does not
+  we will attempt to create it.
+  Next step is to create the needed file patterns to obtain a list of files in
+  both the source and target directory.  If there are no files in the target
+  directory we just created it and need to copy all the files from the source.
+    
 */
 
 do sdirCount = 1 to dirCount
-  call SysFileTree sourceDlist.sdirCount, SFL, 'F' 
-  call SysFileTree targetDlist.sdirCount, TFL, 'F'
-  say 'SFL.0 =' SFL.0 '---' 'TFL.0 =' TFL.0
+
+  tfRC = SysFileExists(targetDlist.sdirCount)
+  if tfRC = 0 then
+  do
+    tfRC = SysMkDir(targetDlist.sdirCount)
+	if tfRC \= 0 then
+	  say 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
+  end
+  
+  sourceDlist.sdirCount = sourceDlist.sdirCount || '\*.*'  
+  targetDlist.sdirCount = targetDlist.sdirCount || '\*.*'
+  
+  sfRC = SysFileTree(sourceDlist.sdirCount, SFL, 'F') 
+  tfRC = SysFileTree(targetDlist.sdirCount, TFL, 'F')
+  
+  if TFL.0 = 0 then
+    do cntSFL = 1 to SFL.0
+	  parse var SFL.cntSFL . . . . sourceFile .
+	  parse var sourceFile sDrive '\' targetFile
+	  targetFile = 'D:\Asus SyncFolder\@BU\' || targetFile
+	  cpRC = SysFileCopy(sourceFile,targetFile)
+	  /*if cpRC \= 0 then say 'SysFileCopy Error =' cpRC*/
+	end  
+  
+
 end
 
 /*
@@ -111,7 +152,8 @@ call SysFileTree sourcePat, myDir, "D"
 if myDir.0 > 0 then
 
   do KK = 1 to myDir.0
-    parse var myDir.KK . . . . curDir . 
+    parse var myDir.KK . . . . curDir
+	curDir = strip(curDir,'B')
     call EnumDirect
   end
 
