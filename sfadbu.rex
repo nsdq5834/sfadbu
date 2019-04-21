@@ -118,7 +118,18 @@ do sdirCount = 1 to dirCount
 	  targetFile = 'D:\Asus SyncFolder\@BU\' || targetFile
 	  cpRC = SysFileCopy(sourceFile,targetFile)
 	  if cpRC \= 0 then say 'SysFileCopy Error =' cpRC sourceFile targetFile
+	end 
+
+do oPoint = 1 to dirCount - 1
+  do iPoint = oPoint+1 to dirCount
+    if dirList.oPoint > dirList.iPoint then
+      do
+	    tempDir = dirList.oPoint
+	    dirList.oPoint = dirList.iPoint
+	    dirList.iPoint = tempDir
 	  end  
+  end iPoint
+end oPoint	
   
 
 end
@@ -141,6 +152,12 @@ call SysFileCopy Backup, Archive
 */
 exit
 
+/*
+  The EnumDirect procedure is used to obtain the list of all directories
+  within the directory whose name is in curDir. dirCount, curDir and the
+  stem dirList. are all exposed so that their values are availble across
+  the entire program scope. The routine is also called recursively.
+*/
 
 EnumDirect: procedure expose dirCount curDir dirList.
 
@@ -159,3 +176,22 @@ if myDir.0 > 0 then
   end
 
 return
+
+IsoFname: procedure
+
+arg FullFileName
+OnlyFileName = ''
+
+FullFileName = strip(FullFileName,'B')
+lengthFFN = length(FullFileName)
+
+do pointFFN = lengthFFN to 1 by -1
+  if substr(FullFileName,pointFFN,1) = '\' then
+    do
+	  lengthFFN = lengthFFN - pointFFN
+	  pointFFN = pointFFN + 1
+	  OnlyFileName = substr(FullFileName,pointFFN,lengthFFN)
+	end
+end pointFFN
+
+return OnlyFileName
