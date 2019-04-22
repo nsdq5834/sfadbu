@@ -184,14 +184,19 @@ OnlyFileName = ''
 
 FullFileName = strip(FullFileName,'B')
 lengthFFN = length(FullFileName)
+lengthFFN1 = lengthFFN
 
 do pointFFN = lengthFFN to 1 by -1
+
+
   if substr(FullFileName,pointFFN,1) = '\' then
     do
-	  lengthFFN = lengthFFN - pointFFN
-	  pointFFN = pointFFN + 1
-	  OnlyFileName = substr(FullFileName,pointFFN,lengthFFN)
+	  lengthFFN1 = lengthFFN1 - pointFFN
+	  pointFFN1 = pointFFN + 1
+	  OnlyFileName = substr(FullFileName,pointFFN1,lengthFFN1)
+	  leave
 	end
+	
 end pointFFN
 
 return OnlyFileName
