@@ -120,19 +120,13 @@ do sdirCount = 1 to dirCount
 	  if cpRC \= 0 then say 'SysFileCopy Error =' cpRC sourceFile targetFile
 	end 
 
-do oPoint = 1 to dirCount - 1
-  do iPoint = oPoint+1 to dirCount
-    if dirList.oPoint > dirList.iPoint then
-      do
-	    tempDir = dirList.oPoint
-	    dirList.oPoint = dirList.iPoint
-	    dirList.iPoint = tempDir
-	  end  
-  end iPoint
-end oPoint	
+  do oPoint = 1 to SFL.0
+    do iPoint = 1 to TFL.0
+    end iPoint
+  end oPoint	
   
-
-end
+  
+end sdirCount
 
 /*
    Loop through the source names. If we do not find the source name
