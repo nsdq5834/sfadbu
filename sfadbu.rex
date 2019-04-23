@@ -22,13 +22,24 @@
     which will allow us to loop through the file lists.
 */
 
-/*say "Input file name:" 
-pull FileInName  */
+
 
 FileInName = 'SourceDirectories.txt'
 
-inTXTfile = .stream~new(FileInName)
+currentTime = time('n')
+parse var currentTime currentHour ':' currentMinute ':' currentSecond
+currentTime = currentHour || currentMinute || currentSecond
+FileOutName = 'Log_' || date('S') || '_' || currentTime || '.txt'
+FileOutName = 'C:\SFADBU\' || FileOutName
 
+inTXTfile = .stream~new(FileInName)
+logFile = .stream~new(FileOutName)
+
+logFile~open('WRITE')
+
+outTxt = date('S') time('n') 'Begin program execution'
+logfile~lineout(outTxt)
+exit
 dCount=0
 dirList. = ''
 
@@ -148,7 +159,6 @@ do sdirCount = 1 to dirCount
 			  end 
 			  
 		    sfcRC = SysFileCopy(sflFname,tflFname)
-			say sflFname tflFname
 			
 			if sfcRC \= 0 then
 			  do
