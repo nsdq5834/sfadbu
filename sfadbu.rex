@@ -118,11 +118,53 @@ do sdirCount = 1 to dirCount
 	  targetFile = 'D:\Asus SyncFolder\@BU\' || targetFile
 	  cpRC = SysFileCopy(sourceFile,targetFile)
 	  if cpRC \= 0 then say 'SysFileCopy Error =' cpRC sourceFile targetFile
+	  leave sdirCount
 	end 
 
   do oPoint = 1 to SFL.0
+  
+    parse var SFL.oPoint sflDate sflTime sflSize sflAttrib sflFname
+	
+	sourceFname = IsoFname(sflFname)
+	sflFname = strip(sflFname,'B')
+	
     do iPoint = 1 to TFL.0
+	
+	  parse var TFL.iPoint tflDate tflTime tflSize tflAttrib tflFname
+	  targetFname = IsoFname(tflFname)
+	  
+	  tflFname = strip(tflFname,'B')
+	  
+	  if  sourceFname = targetFname & ,
+	     (sflSize \= tflSize | sflDate \= tflDate | sflTime \= tflTime) then
+		   
+		do  
+		    sfdRC = SysFileDelete(tflFname)
+			
+			if sfdRC \= 0 then
+			  do
+			    say 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
+			    leave oPoint
+			  end 
+			  
+		    sfcRC = SysFileCopy(sflFname,tflFname)
+			say sflFname tflFname
+			
+			if sfcRC \= 0 then
+			  do
+			    say 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+				leave oPoint
+		      end		  		  
+        
+		end
+		
     end iPoint
+	
+	sfcRC = SysFileCopy(sflFname,tflFname)
+	
+	if sfcRC \= 0 then
+	  say 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+	
   end oPoint	
   
   
