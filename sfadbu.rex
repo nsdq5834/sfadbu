@@ -77,7 +77,7 @@ logFile~lineout(outTxt)
 
 /*
   Sort the list of directories in dirList into ascending order.
-*/
+
 
 outTxt = date('S') time('n') 'Begin directory sort'
 logFile~lineout(outTxt)
@@ -95,7 +95,7 @@ end oPoint
 
 outTxt = date('S') time('n') 'Directory sort complete'
 logFile~lineout(outTxt)
-
+*/
 /*
   Build the list of source and target directories.
 */
@@ -123,29 +123,31 @@ logFile~lineout(outTxt)
   directory we just created it and need to copy all the files from the source.
     
 */
-
+say 'dirCount =' dirCount
 do sdirCount = 1 to dirCount
-
+say 'sdirCount =' sdirCount
   sfeRC = SysFileExists(targetDlist.sdirCount)
   
   if sfeRC = 0 then
     do
+
       outTxt = date('S') time('n') 'SysFileExists RC =' tfRC ,
 	   'for' targetDlist.sdirCount
       logFile~lineout(outTxt)
   
       smdRC = SysMkDir(targetDlist.sdirCount)
-	  
+
 	  if smdRC \= 0 then
 	    do
-	      outTxt = date('S') time('n') 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
+	      outTxt = date('S') time('n') 'Return code from SysMkDir =' smdRC 'for' targetDlist.sdirCount
 	      logFile~lineout(outTxt)
         end
       else
         do
-	      outTxt = date('S') time('n') 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
+	      outTxt = date('S') time('n') 'Return code from SysMkDir =' smdRC 'for' targetDlist.sdirCount
 	      logFile~lineout(outTxt)
 	    end
+		
 	end	
   
   sourceDlist.sdirCount = sourceDlist.sdirCount || '\*.*'  
@@ -173,39 +175,39 @@ do sdirCount = 1 to dirCount
   
     parse var SFL.oPoint sflDate sflTime sflSize sflAttrib sflFname
 	
-	sourceFname = IsoFname(sflFname)
 	sflFname = strip(sflFname,'B')
+	sourceFname = IsoFname(sflFname)
 	
     do iPoint = 1 to TFL.0
 	
 	  parse var TFL.iPoint tflDate tflTime tflSize tflAttrib tflFname
-	  targetFname = IsoFname(tflFname)
 	  
 	  tflFname = strip(tflFname,'B')
+	  targetFname = IsoFname(tflFname)
+	  
 	  
 	  if  sourceFname = targetFname & ,
 	     (sflSize \= tflSize | sflDate \= tflDate | sflTime \= tflTime) then
 		   
-		do 
-          outTxt = date('S') time('n') 'Attempting copy' sourceFname targetFname
-	      logFile~lineout(outTxt)		
-		    sfdRC = SysFileDelete(tflFname)
+		do
+		
+    	  sfdRC = SysFileDelete(tflFname)
 			
-			if sfdRC \= 0 then
-			  do
-				outTxt = date('S') time('n') 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
-	            logFile~lineout(outTxt)
-			    leave oPoint
-			  end 
+		  if sfdRC \= 0 then
+			do
+			  outTxt = date('S') time('n') 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
+	          logFile~lineout(outTxt)
+			  leave oPoint
+			end 
 			  
 		    sfcRC = SysFileCopy(sflFname,tflFname)
 			
-			if sfcRC \= 0 then
-			  do
-				outTxt = date('S') time('n') 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
-	            logFile~lineout(outTxt)
-				leave oPoint
-		      end		  		  
+		  if sfcRC \= 0 then
+			do
+			  outTxt = date('S') time('n') 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+	          logFile~lineout(outTxt)
+			  leave oPoint
+		    end		  		  
         
 		end
 		
@@ -238,6 +240,7 @@ outTxt = date('S') time('n') 'End program execution'
 logFile~lineout(outTxt)
 logFile~close
 inTXTfile~close
+
 exit
 
 /*
