@@ -126,15 +126,17 @@ logFile~lineout(outTxt)
 
 do sdirCount = 1 to dirCount
 
-  tfRC = SysFileExists(targetDlist.sdirCount)
-  outTxt = date('S') time('n') 'Return code from SysFileExists =' tfRC 'for' targetDlist.sdirCount
-  logFile~lineout(outTxt)
+  sfeRC = SysFileExists(targetDlist.sdirCount)
   
-  if tfRC = 0 then
+  if sfeRC = 0 then
     do
-      tfRC = SysMkDir(targetDlist.sdirCount)
+      outTxt = date('S') time('n') 'SysFileExists RC =' tfRC ,
+	   'for' targetDlist.sdirCount
+      logFile~lineout(outTxt)
+  
+      smdRC = SysMkDir(targetDlist.sdirCount)
 	  
-	  if tfRC \= 0 then
+	  if smdRC \= 0 then
 	    do
 	      outTxt = date('S') time('n') 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
 	      logFile~lineout(outTxt)
