@@ -38,8 +38,8 @@ logFile = .stream~new(FileOutName)
 logFile~open('WRITE')
 
 outTxt = date('S') time('n') 'Begin program execution'
-logfile~lineout(outTxt)
-exit
+logFile~lineout(outTxt)
+
 dCount=0
 dirList. = ''
 
@@ -55,6 +55,10 @@ end
 
 eofAllDone:
 
+outTxt = date('S') time('n') 'Number of base directories to process =' dCount
+logFile~lineout(outTxt)
+
+
 /* Set initial directory count to zero.
    Call the EnumDirect routine to obtain a list of any subdirectories.
    When we complete this loop, the dirList stem should contail a list
@@ -68,9 +72,15 @@ do dPoint = 1 to dCount
  call EnumDirect
 end
 
+outTxt = date('S') time('n') 'Total # directories to process =' dirCount
+logFile~lineout(outTxt)
+
 /*
   Sort the list of directories in dirList into ascending order.
 */
+
+outTxt = date('S') time('n') 'Begin directory sort'
+logFile~lineout(outTxt)
 
 do oPoint = 1 to dirCount - 1
   do iPoint = oPoint+1 to dirCount
@@ -83,9 +93,15 @@ do oPoint = 1 to dirCount - 1
   end iPoint
 end oPoint
 
+outTxt = date('S') time('n') 'Directory sort complete'
+logFile~lineout(outTxt)
+
 /*
   Build the list of source and target directories.
 */
+
+outTxt = date('S') time('n') 'Build target directory list'
+logFile~lineout(outTxt)
 
 sourceDlist. = ''
 targetDlist. = ''
@@ -95,6 +111,9 @@ do sdirCount = 1 to dirCount
   parse var dirList.sdirCount tDrive '\' targetDlist.sdirCount
   targetDlist.sdirCount = 'D:\Asus SyncFolder\@BU\' || targetDlist.sdirCount
 end
+
+outTxt = date('S') time('n') 'Target directory list build complete'
+logFile~lineout(outTxt)
 
 /*
   First step is to check and see if the target directory exists. If it does not
@@ -108,12 +127,24 @@ end
 do sdirCount = 1 to dirCount
 
   tfRC = SysFileExists(targetDlist.sdirCount)
+  outTxt = 'Return code from SysFileExists =' tfRC 'for' targetDlist.sdirCount
+  logFile~lineout(outTxt)
+  
   if tfRC = 0 then
-  do
-    tfRC = SysMkDir(targetDlist.sdirCount)
-	if tfRC \= 0 then
-	  say 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
-  end
+    do
+      tfRC = SysMkDir(targetDlist.sdirCount)
+	  
+	  if tfRC \= 0 then
+	    do
+	      outTxt = 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
+	      logFile~lineout(outTxt)
+        end
+      else
+        do
+	      outTxt = 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
+	      logFile~lineout(outTxt)
+	    end
+	end	
   
   sourceDlist.sdirCount = sourceDlist.sdirCount || '\*.*'  
   targetDlist.sdirCount = targetDlist.sdirCount || '\*.*'
@@ -129,6 +160,10 @@ do sdirCount = 1 to dirCount
 	  targetFile = 'D:\Asus SyncFolder\@BU\' || targetFile
 	  cpRC = SysFileCopy(sourceFile,targetFile)
 	  if cpRC \= 0 then say 'SysFileCopy Error =' cpRC sourceFile targetFile
+	    do
+	      outTxt = 'SysFileCopy Error =' cpRC sourceFile targetFile
+	      logFile~lineout(outTxt)
+		end  
 	  leave sdirCount
 	end 
 
@@ -149,12 +184,15 @@ do sdirCount = 1 to dirCount
 	  if  sourceFname = targetFname & ,
 	     (sflSize \= tflSize | sflDate \= tflDate | sflTime \= tflTime) then
 		   
-		do  
+		do 
+          outTxt = 'Attempting copy' sourceFname targetFname
+	      logFile~lineout(outTxt)		
 		    sfdRC = SysFileDelete(tflFname)
 			
 			if sfdRC \= 0 then
 			  do
-			    say 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
+				outTxt = 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
+	            logFile~lineout(outTxt)
 			    leave oPoint
 			  end 
 			  
@@ -162,7 +200,8 @@ do sdirCount = 1 to dirCount
 			
 			if sfcRC \= 0 then
 			  do
-			    say 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+				outTxt = 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+	            logFile~lineout(outTxt)
 				leave oPoint
 		      end		  		  
         
@@ -173,9 +212,12 @@ do sdirCount = 1 to dirCount
 	sfcRC = SysFileCopy(sflFname,tflFname)
 	
 	if sfcRC \= 0 then
-	  say 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+	  do
+	    outTxt = 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+	    logFile~lineout(outTxt)
+	  end			
 	
-  end oPoint	
+    end oPoint	
   
   
 end sdirCount
@@ -190,12 +232,10 @@ end sdirCount
    already exists in the target location, we will overwrite it.
 */
 
-/*
-
-call SysFileCopy Backup, Q_Data
-
-call SysFileCopy Backup, Archive
-*/
+outTxt = date('S') time('n') 'End program execution'
+logFile~lineout(outTxt)
+logFile~close
+inTXTfile~close
 exit
 
 /*
