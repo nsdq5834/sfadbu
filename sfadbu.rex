@@ -127,7 +127,7 @@ logFile~lineout(outTxt)
 do sdirCount = 1 to dirCount
 
   tfRC = SysFileExists(targetDlist.sdirCount)
-  outTxt = 'Return code from SysFileExists =' tfRC 'for' targetDlist.sdirCount
+  outTxt = date('S') time('n') 'Return code from SysFileExists =' tfRC 'for' targetDlist.sdirCount
   logFile~lineout(outTxt)
   
   if tfRC = 0 then
@@ -136,12 +136,12 @@ do sdirCount = 1 to dirCount
 	  
 	  if tfRC \= 0 then
 	    do
-	      outTxt = 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
+	      outTxt = date('S') time('n') 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
 	      logFile~lineout(outTxt)
         end
       else
         do
-	      outTxt = 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
+	      outTxt = date('S') time('n') 'Return code from SysMkDir =' tfRC 'for' targetDlist.sdirCount
 	      logFile~lineout(outTxt)
 	    end
 	end	
@@ -159,9 +159,9 @@ do sdirCount = 1 to dirCount
 	  parse var sourceFile sDrive '\' targetFile
 	  targetFile = 'D:\Asus SyncFolder\@BU\' || targetFile
 	  cpRC = SysFileCopy(sourceFile,targetFile)
-	  if cpRC \= 0 then say 'SysFileCopy Error =' cpRC sourceFile targetFile
+	  if cpRC \= 0 then
 	    do
-	      outTxt = 'SysFileCopy Error =' cpRC sourceFile targetFile
+	      outTxt = date('S') time('n') 'SysFileCopy Error =' cpRC sourceFile targetFile
 	      logFile~lineout(outTxt)
 		end  
 	  leave sdirCount
@@ -185,13 +185,13 @@ do sdirCount = 1 to dirCount
 	     (sflSize \= tflSize | sflDate \= tflDate | sflTime \= tflTime) then
 		   
 		do 
-          outTxt = 'Attempting copy' sourceFname targetFname
+          outTxt = date('S') time('n') 'Attempting copy' sourceFname targetFname
 	      logFile~lineout(outTxt)		
 		    sfdRC = SysFileDelete(tflFname)
 			
 			if sfdRC \= 0 then
 			  do
-				outTxt = 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
+				outTxt = date('S') time('n') 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
 	            logFile~lineout(outTxt)
 			    leave oPoint
 			  end 
@@ -200,7 +200,7 @@ do sdirCount = 1 to dirCount
 			
 			if sfcRC \= 0 then
 			  do
-				outTxt = 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+				outTxt = date('S') time('n') 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
 	            logFile~lineout(outTxt)
 				leave oPoint
 		      end		  		  
@@ -213,7 +213,7 @@ do sdirCount = 1 to dirCount
 	
 	if sfcRC \= 0 then
 	  do
-	    outTxt = 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+	    outTxt = date('S') time('n') 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
 	    logFile~lineout(outTxt)
 	  end			
 	
