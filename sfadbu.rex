@@ -76,27 +76,6 @@ outTxt = date('S') time('n') 'Total # directories to process =' dirCount
 logFile~lineout(outTxt)
 
 /*
-  Sort the list of directories in dirList into ascending order.
-
-
-outTxt = date('S') time('n') 'Begin directory sort'
-logFile~lineout(outTxt)
-
-do oPoint = 1 to dirCount - 1
-  do iPoint = oPoint+1 to dirCount
-    if dirList.oPoint > dirList.iPoint then
-      do
-	    tempDir = dirList.oPoint
-	    dirList.oPoint = dirList.iPoint
-	    dirList.iPoint = tempDir
-	  end  
-  end iPoint
-end oPoint
-
-outTxt = date('S') time('n') 'Directory sort complete'
-logFile~lineout(outTxt)
-*/
-/*
   Build the list of source and target directories.
 */
 
@@ -106,11 +85,11 @@ logFile~lineout(outTxt)
 sourceDlist. = ''
 targetDlist. = ''
 
-do sdirCount = 1 to dirCount
-  sourceDlist.sdirCount = dirList.sdirCount
-  parse var dirList.sdirCount tDrive '\' targetDlist.sdirCount
-  targetDlist.sdirCount = 'D:\Asus SyncFolder\@BU\' || targetDlist.sdirCount
-end
+do sdirCnt = 1 to dirCount
+  sourceDlist.sdirCnt = dirList.sdirCnt
+  parse var dirList.sdirCnt tDrive '\' targetDlist.sdirCnt
+  targetDlist.sdirCnt = 'D:\Bill SyncFolder\@BU\' || targetDlist.sdirCnt
+end sdirCnt
 
 outTxt = date('S') time('n') 'Target directory list build complete'
 logFile~lineout(outTxt)
@@ -123,15 +102,15 @@ logFile~lineout(outTxt)
   directory we just created it and need to copy all the files from the source.
     
 */
-say 'dirCount =' dirCount
+
 do sdirCount = 1 to dirCount
-say 'sdirCount =' sdirCount
+
   sfeRC = SysFileExists(targetDlist.sdirCount)
   
   if sfeRC = 0 then
     do
 
-      outTxt = date('S') time('n') 'SysFileExists RC =' tfRC ,
+      outTxt = date('S') time('n') 'SysFileExists RC =' sfeRC ,
 	   'for' targetDlist.sdirCount
       logFile~lineout(outTxt)
   
@@ -161,14 +140,14 @@ say 'sdirCount =' sdirCount
 	  parse var SFL.cntSFL . . . . sourceFile
 	  sourceFile = strip(sourceFile,'B')
 	  parse var sourceFile sDrive '\' targetFile
-	  targetFile = 'D:\Asus SyncFolder\@BU\' || targetFile
+	  targetFile = 'D:\Bill SyncFolder\@BU\' || targetFile
 	  cpRC = SysFileCopy(sourceFile,targetFile)
 	  if cpRC \= 0 then
 	    do
 	      outTxt = date('S') time('n') 'SysFileCopy Error =' cpRC sourceFile targetFile
 	      logFile~lineout(outTxt)
 		end  
-	  leave sdirCount
+	    iterate
 	end 
 
   do oPoint = 1 to SFL.0
@@ -184,13 +163,16 @@ say 'sdirCount =' sdirCount
 	  
 	  tflFname = strip(tflFname,'B')
 	  targetFname = IsoFname(tflFname)
-	  
-	  
+
+      sourceFileFound = 0	  
+
 	  if  sourceFname = targetFname & ,
 	     (sflSize \= tflSize | sflDate \= tflDate | sflTime \= tflTime) then
 		   
 		do
-		
+		sourceFileFound = 1
+	  outTxt = sourceFname targetFname sflSize tflSize sflDate tflDate sflTime tflTime 
+	  logFile~lineout(outTxt)
     	  sfdRC = SysFileDelete(tflFname)
 			
 		  if sfdRC \= 0 then
@@ -199,12 +181,12 @@ say 'sdirCount =' sdirCount
 	          logFile~lineout(outTxt)
 			  leave oPoint
 			end 
-			  
+ 
 		    sfcRC = SysFileCopy(sflFname,tflFname)
 			
 		  if sfcRC \= 0 then
 			do
-			  outTxt = date('S') time('n') 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+			  outTxt = date('S') time('n') 'iPoint SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
 	          logFile~lineout(outTxt)
 			  leave oPoint
 		    end		  		  
@@ -213,11 +195,12 @@ say 'sdirCount =' sdirCount
 		
     end iPoint
 	
-	sfcRC = SysFileCopy(sflFname,tflFname)
+	if sourceFileFound = 0 then
+	 sfcRC = SysFileCopy(sflFname,tflFname)
 	
 	if sfcRC \= 0 then
 	  do
-	    outTxt = date('S') time('n') 'SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+	    outTxt = date('S') time('n') 'oPoint SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
 	    logFile~lineout(outTxt)
 	  end			
 	
