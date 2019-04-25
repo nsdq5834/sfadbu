@@ -3,26 +3,16 @@
    sfadbu.rex
    Base code	02/14/2019
    Revision 1	02/14/2019
+   Revision 2   04/25/2019
 
-   This is a special function Rexx program that is used to make backup
-   copies of the Quicken database. We will make two copies to two dif-
-   ferent locations. We get a list of the files in the Quicken backup
-   directory/folder and if a file in the source location does not exist
-   in the target location, then we will make a copy.
-   
-   When this operation is complete, we make a copy of the KeePass data-
-   base to the two locations as well.
-   
-   Set up some variables to make it easier to alter both the source and
-   target locations as well as the file search pattern.
-*/
-   
-/*	Use the SysFileTree function to obtain the contents of the source and
-    two target directories. The results are placed into STEM variables
-    which will allow us to loop through the file lists.
 */
 
-
+/*
+  Begin by identifying the input file that contains the list of the base
+  directories/folders that we want to make backups from. Create a unique
+  file name that we can use for our log file that will track the programs
+  execution.
+*/
 
 FileInName = 'SourceDirectories.txt'
 
@@ -31,6 +21,11 @@ parse var currentTime currentHour ':' currentMinute ':' currentSecond
 currentTime = currentHour || currentMinute || currentSecond
 FileOutName = 'Log_' || date('S') || '_' || currentTime || '.txt'
 FileOutName = 'C:\SFADBU\' || FileOutName
+
+/*
+  Set up the stream objects so that we can then use them to access the
+  underlying files.
+*/
 
 inTXTfile = .stream~new(FileInName)
 logFile = .stream~new(FileOutName)
@@ -43,21 +38,19 @@ logFile~lineout(outTxt)
 dCount=0
 dirList. = ''
 
-signal on notready name eofAllDone
+
 
 /* Loop through the file reading the list of directories to be backed up     */
 
-do forever
+do while inTXTfile~lines \= 0
   inBuff = inTXTfile~linein
   dCount = dCount + 1
   DirToBackup.dCount = strip(inBuff,"B")
 end
 
-eofAllDone:
-
 outTxt = date('S') time('n') 'Number of base directories to process =' dCount
 logFile~lineout(outTxt)
-
+exit
 
 /* Set initial directory count to zero.
    Call the EnumDirect routine to obtain a list of any subdirectories.
