@@ -48,9 +48,14 @@ do while inTXTfile~lines \= 0
   DirToBackup.dCount = strip(inBuff,"B")
 end
 
+/*
+  Write a message to the log detailing the base number of directories we are
+  going to try to process.
+*/
+
 outTxt = date('S') time('n') 'Number of base directories to process =' dCount
 logFile~lineout(outTxt)
-exit
+
 
 /* Set initial directory count to zero.
    Call the EnumDirect routine to obtain a list of any subdirectories.
@@ -65,8 +70,20 @@ do dPoint = 1 to dCount
  call EnumDirect
 end
 
+/*
+  Write a message to the log detailing the total number of directories that we
+  are going to try to process.  At this point, the dirList stem variable con-
+  tains the list of source directories and dirCount contains the number of
+  source directories.
+*/
+
 outTxt = date('S') time('n') 'Total # directories to process =' dirCount
 logFile~lineout(outTxt)
+
+do dPoint = 1 to dirCount
+  outTxt = date('S') time('n') dirList.dPoint
+  logFile~lineout(outTxt)
+end
 
 /*
   Build the list of source and target directories.
@@ -87,6 +104,36 @@ end sdirCnt
 outTxt = date('S') time('n') 'Target directory list build complete'
 logFile~lineout(outTxt)
 
+do sdirCnt = 1 to dirCount
+  outTxt = date('S') time('n') targetDlist.sdirCnt
+  logFile~lineout(outTxt)
+end
+
+/*
+  At this point the list of source directories is contained in the 
+  sourceDlist stem and the target directories are contained in the
+  targetDlist stem.  We will check to see if the target directories
+  exist. If they do not, then we will attempt to create the directory.
+  If we encounter an error in the create, we will write a message to
+  the log file and then terminate the exicution of the program.
+*/
+
+do sdirCnt = 1 to dirCount
+
+ sfeRC = SysFileExists(targetDlist.sdirCnt)
+ 
+ if sfeRC = 1 then iterate
+ 
+ smdRC = SysMkDir(targetDlist.sdirCnt)
+ 
+ if smdRC = 0 then iterate
+ 
+ outTxt = date('S') time('n') 'Return code from SysMkDir =' smdRC 'for' targetDlist.sdirCnt
+ logFile~lineout(outTxt)
+ exit smdRC
+ 
+end
+exit
 /*
   First step is to check and see if the target directory exists. If it does not
   we will attempt to create it.
