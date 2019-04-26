@@ -107,6 +107,10 @@ end sdirCnt
 outTxt = date('S') time('n') 'Target directory list build complete'
 logFile~lineout(outTxt)
 
+/*
+  Output the list of target directories that we will attempt to process.
+*/
+
 do sdirCnt = 1 to dirCount
   outTxt = date('S') time('n') targetDlist.sdirCnt
   logFile~lineout(outTxt)
@@ -143,19 +147,15 @@ end
 
 outTxt = date('S') time('n') 'Number of Directories/Folders created =' FoldersCreated
 logFile~lineout(outTxt)
-/*
-
-    
-*/
 
 do sdirCount = 1 to dirCount
-  
+ 
   sourceDlist.sdirCount = sourceDlist.sdirCount || '\*.*'  
   targetDlist.sdirCount = targetDlist.sdirCount || '\*.*'
   
   sfRC = SysFileTree(sourceDlist.sdirCount, SFL, 'F') 
   tfRC = SysFileTree(targetDlist.sdirCount, TFL, 'F')
-  
+
   if TFL.0 = 0 then
     do
       do cntSFL = 1 to SFL.0
@@ -174,50 +174,36 @@ do sdirCount = 1 to dirCount
           FilesCopied = FilesCopied + 1		
 	    end
 	  end
-	  leave sdirCount
+	  iterate
     end	
 
-  do oPoint = 1 to SFL.0
-  
-    parse var SFL.oPoint sflDate sflTime sflSize sflAttrib sflFname
-	
-	sflFname = strip(sflFname,'B')
-	sourceFname = IsoFname(sflFname)
-	
-    do iPoint = 1 to TFL.0
-	
-	  parse var TFL.iPoint tflDate tflTime tflSize tflAttrib tflFname
-	  
-	  tflFname = strip(tflFname,'B')
-	  targetFname = IsoFname(tflFname)	  
+do oPoint = 1 to SFL.0
 
-	  if  sourceFname = targetFname then
-	    do
-	      if sflSize = tflSize & sflDate = tflDate & sflTime = tflTime then
-		  leave oPoint
-		end  
-	  else
-        do
-		  sfdRC = SysFileDelete(tflFname)
-		  if sfdRC \= 0 then
-			do
-		 	  outTxt = date('S') time('n') 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
-	          logFile~lineout(outTxt)
-			  leave oPoint
-			end
-		  else 
-			do
-			  sfcRC = SysFileCopy(sflFname,tflFname)
-			  if sfcRC \= 0 then
-			    do
-			      outTxt = date('S') time('n') 'iPoint SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
-	              logFile~lineout(outTxt)
-			      leave oPoint
-		        end
-			  end
-          end	
-		
-    end iPoint
+  parse var SFL.oPoint sflDate sflTime sflSize sflAttrib sflFname
+  
+  sflFname = strip(sflFname,'B')
+  sourceFname = IsoFname(sflFname)
+  if left(sourceFname,1) = '~' then leave oPoint  
+  do iPoint = 1 to TFL.0
+  
+  parse var TFL.iPoint tflDate tflTime tflSize tflAttrib tflFname
+
+  tflFname = strip(tflFname,'B')
+  targetFname = IsoFname(tflFname)
+  if left(targetFname,1) = '~' then leave iPoint 
+  if sourceFname = targetFname then leave iPoint
+  
+  end iPoint
+  
+  if sourceFname = targetFname & ,
+   sflDate = tflDate & sflTime = tflTime & sflSize = tflSize then
+    leave oPoint
+  else
+    do
+	  sfdRC = SysFileDelete(tflFname)
+	  sfcRC = SysFileCopy(sflFname,tflFname)	  
+	  leave oPoint  
+    end
 	
 	parse var SFL.oPoint . . . . sourceFile
 	sourceFile = strip(sourceFile,'B')
@@ -225,19 +211,13 @@ do sdirCount = 1 to dirCount
 	tflFname = BackupDirectory || tflFname
 	
 	sfcRC = SysFileCopy(sflFname,tflFname)
-	
-	if sfcRC \= 0 then
-	  do
-	    outTxt = date('S') time('n') 'oPoint SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
-	    logFile~lineout(outTxt)
-	  end			
-	
-    end oPoint	
+    
+end oPoint  	
   
   
 end sdirCount
 
-outTxt = date('S') time('n') 'Number of Files copies =' FilesCopied
+outTxt = date('S') time('n') 'Number of Files copied =' FilesCopied
 logFile~lineout(outTxt)
 
 outTxt = date('S') time('n') 'End program execution'
@@ -296,3 +276,48 @@ do pointFFN = lengthFFN to 1 by -1
 end pointFFN
 
 return OnlyFileName
+
+/*
+if  (sourceFname = targetFname) & ,			
+	      if sflSize = tflSize & sflDate = tflDate & sflTime = tflTime then
+		    do
+			say 'Loop oPoint 1'
+		    leave oPoint
+			end
+		end  
+	  else
+        do
+		  sfdRC = SysFileDelete(tflFname)
+		  if sfdRC \= 0 then
+			do
+		 	  outTxt = date('S') time('n') 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
+	          logFile~lineout(outTxt)
+			  leave oPoint
+			end
+		  else 
+			do
+			  sfcRC = SysFileCopy(sflFname,tflFname)
+			  if sfcRC \= 0 then
+			    do
+			      outTxt = date('S') time('n') 'iPoint SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+	              logFile~lineout(outTxt)
+			      leave oPoint
+		        end
+			  end
+          end	
+		
+    end iPoint
+	
+	parse var SFL.oPoint . . . . sourceFile
+	sourceFile = strip(sourceFile,'B')
+	parse var sourceFile sDrive '\' tflFname
+	tflFname = BackupDirectory || tflFname
+	
+	sfcRC = SysFileCopy(sflFname,tflFname)
+	
+	if sfcRC \= 0 then
+	  do
+	    outTxt = date('S') time('n') 'oPoint SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
+	    logFile~lineout(outTxt)
+	  end
+*/
