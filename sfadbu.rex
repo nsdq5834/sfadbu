@@ -4,10 +4,17 @@
    Base code	02/14/2019
    Revision 1	02/14/2019
    Revision 2   04/25/2019
+   Revision 3   04/27/2019
+   
+   This is a simple homegrown backup utility program. It reads a list of
+   high level directories that are to be backed up. It builds the list of
+   all subdirectories. If a directory/sub-directory does not exist in the
+   target file system it is created. A file list is built for each of the 
+   the directories on both the source and target. If the files and their
+   attributes do not match, the file is copied. If a file exists on the
+   source but not the target it is copied. Messages are written to a log
+   file to track program execution.   
 
-*/
-
-/*
   Begin by identifying the input file that contains the list of the base
   directories/folders that we want to make backups from. Create a unique
   file name that we can use for our log file that will track the programs
@@ -16,6 +23,8 @@
 
 FileInName = 'SourceDirectories.txt'
 BackupDirectory = 'D:\Bill SyncFolder\@BU\'
+
+/* Now create the log file name using date and time functions.                */
 
 currentTime = time('n')
 parse var currentTime currentHour ':' currentMinute ':' currentSecond
@@ -36,14 +45,14 @@ logFile~open('WRITE')
 outTxt = date('S') time('n') 'Begin program execution'
 logFile~lineout(outTxt)
 
+/* initialize some variables.                                                 */
+
 dCount = 0
 dirList. = ''
 FoldersCreated = 0
 FilesCopied = 0
 
-
-
-/* Loop through the file reading the list of directories to be backed up     */
+/* Loop through the file reading the list of directories to be backed up      */
 
 do while inTXTfile~lines \= 0
   inBuff = inTXTfile~linein
@@ -177,54 +186,46 @@ do sdirCount = 1 to dirCount
 	  iterate
     end	
 
-do oPoint = 1 to SFL.0
+  do oPoint = 1 to SFL.0
 
-  parse var SFL.oPoint sflDate sflTime sflSize sflAttrib sflFname  
-  sflFname = strip(sflFname,'B')
-  sourceFname = IsoFname(sflFname)
-  if left(sourceFname,1) = '~' then iterate
+    parse var SFL.oPoint sflDate sflTime sflSize sflAttrib sflFname  
+    sflFname = strip(sflFname,'B')
+    sourceFname = IsoFname(sflFname)
+    if left(sourceFname,1) = '~' then iterate
   
-  do iPoint = 1 to TFL.0
+    do iPoint = 1 to TFL.0
   
-  parse var TFL.iPoint tflDate tflTime tflSize tflAttrib tflFname
+      parse var TFL.iPoint tflDate tflTime tflSize tflAttrib tflFname
+      tflFname = strip(tflFname,'B')
+      targetFname = IsoFname(tflFname)
 
-  tflFname = strip(tflFname,'B')
-  targetFname = IsoFname(tflFname)
-
-  if sourceFname = targetFname then leave iPoint
+    if sourceFname = targetFname then leave iPoint
   
-  end iPoint
+    end iPoint
   
-  if iPoint = TFL.0 + 1 then
-  do
-    say 'Copy new file'
-	parse var SFL.oPoint . . . . sourceFile
-	sourceFile = strip(sourceFile,'B')
-	parse var sourceFile sDrive '\' tflFname
-	tflFname = BackupDirectory || tflFname
-	say sflFname
-	say tflFname
-	sfcRC = SysFileCopy(sflFname,tflFname)
-	FilesCopied = FilesCopied + 1
-    iterate	
-  end
+    if iPoint = TFL.0 + 1 then
+      do
+	    parse var SFL.oPoint . . . . sourceFile
+	    sourceFile = strip(sourceFile,'B')
+	    parse var sourceFile sDrive '\' tflFname
+	    tflFname = BackupDirectory || tflFname
+	    sfcRC = SysFileCopy(sflFname,tflFname)
+	    FilesCopied = FilesCopied + 1
+        iterate	
+      end
   
   if sourceFname = targetFname & ,
    sflDate = tflDate & sflTime = tflTime & sflSize = tflSize then
-   do
-    iterate
-   end	
+     iterate
   else
     do
-	say 'Files not equal in both folders'
-	say sflFname tflFname
 	  sfdRC = SysFileDelete(tflFname)
 	  sfcRC = SysFileCopy(sflFname,tflFname)
       FilesCopied = FilesCopied + 1	  
 	  iterate
     end
 
-end oPoint  
+  end oPoint  
   
 end sdirCount
 
@@ -264,6 +265,11 @@ if myDir.0 > 0 then
 
 return
 
+/*
+  The IsoFname function takes a fully qualified file name and strips off the
+  path information so we are left with the simple file name.
+*/
+
 IsoFname: procedure
 
 arg FullFileName
@@ -287,48 +293,3 @@ do pointFFN = lengthFFN to 1 by -1
 end pointFFN
 
 return OnlyFileName
-
-/*
-if  (sourceFname = targetFname) & ,			
-	      if sflSize = tflSize & sflDate = tflDate & sflTime = tflTime then
-		    do
-			say 'Loop oPoint 1'
-		    leave oPoint
-			end
-		end  
-	  else
-        do
-		  sfdRC = SysFileDelete(tflFname)
-		  if sfdRC \= 0 then
-			do
-		 	  outTxt = date('S') time('n') 'SysFileDelete Error ' tflFname sfdRC SysGetErrortext(sfdRC)
-	          logFile~lineout(outTxt)
-			  leave oPoint
-			end
-		  else 
-			do
-			  sfcRC = SysFileCopy(sflFname,tflFname)
-			  if sfcRC \= 0 then
-			    do
-			      outTxt = date('S') time('n') 'iPoint SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
-	              logFile~lineout(outTxt)
-			      leave oPoint
-		        end
-			  end
-          end	
-		
-    end iPoint
-	
-	parse var SFL.oPoint . . . . sourceFile
-	sourceFile = strip(sourceFile,'B')
-	parse var sourceFile sDrive '\' tflFname
-	tflFname = BackupDirectory || tflFname
-	
-	sfcRC = SysFileCopy(sflFname,tflFname)
-	
-	if sfcRC \= 0 then
-	  do
-	    outTxt = date('S') time('n') 'oPoint SysFileCopy Error' sflFname tflFname sfcRC SysGetErrortext(sfcRC)
-	    logFile~lineout(outTxt)
-	  end
-*/
