@@ -179,41 +179,52 @@ do sdirCount = 1 to dirCount
 
 do oPoint = 1 to SFL.0
 
-  parse var SFL.oPoint sflDate sflTime sflSize sflAttrib sflFname
-  
+  parse var SFL.oPoint sflDate sflTime sflSize sflAttrib sflFname  
   sflFname = strip(sflFname,'B')
   sourceFname = IsoFname(sflFname)
-  if left(sourceFname,1) = '~' then leave oPoint  
+  if left(sourceFname,1) = '~' then iterate
+  
   do iPoint = 1 to TFL.0
   
   parse var TFL.iPoint tflDate tflTime tflSize tflAttrib tflFname
 
   tflFname = strip(tflFname,'B')
   targetFname = IsoFname(tflFname)
-  if left(targetFname,1) = '~' then leave iPoint 
+
   if sourceFname = targetFname then leave iPoint
   
   end iPoint
   
-  if sourceFname = targetFname & ,
-   sflDate = tflDate & sflTime = tflTime & sflSize = tflSize then
-    leave oPoint
-  else
-    do
-	  sfdRC = SysFileDelete(tflFname)
-	  sfcRC = SysFileCopy(sflFname,tflFname)	  
-	  leave oPoint  
-    end
-	
+  if iPoint = TFL.0 + 1 then
+  do
+    say 'Copy new file'
 	parse var SFL.oPoint . . . . sourceFile
 	sourceFile = strip(sourceFile,'B')
 	parse var sourceFile sDrive '\' tflFname
 	tflFname = BackupDirectory || tflFname
-	
+	say sflFname
+	say tflFname
 	sfcRC = SysFileCopy(sflFname,tflFname)
-    
-end oPoint  	
+	FilesCopied = FilesCopied + 1
+    iterate	
+  end
   
+  if sourceFname = targetFname & ,
+   sflDate = tflDate & sflTime = tflTime & sflSize = tflSize then
+   do
+    iterate
+   end	
+  else
+    do
+	say 'Files not equal in both folders'
+	say sflFname tflFname
+	  sfdRC = SysFileDelete(tflFname)
+	  sfcRC = SysFileCopy(sflFname,tflFname)
+      FilesCopied = FilesCopied + 1	  
+	  iterate
+    end
+
+end oPoint  
   
 end sdirCount
 
