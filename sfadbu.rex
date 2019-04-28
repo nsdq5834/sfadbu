@@ -22,7 +22,7 @@
 */
 
 FileInName = 'SourceDirectories.txt'
-BackupDirectory = 'D:\Bill SyncFolder\@BU\'
+BackupDirectory = 'D:\Asus SyncFolder\@BU\'
 
 /* Now create the log file name using date and time functions.                */
 
