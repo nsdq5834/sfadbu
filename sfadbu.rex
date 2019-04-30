@@ -150,6 +150,8 @@ do sdirCnt = 1 to dirCount
  
  outTxt = date('S') time('n') 'Return code from SysMkDir =' smdRC 'for' targetDlist.sdirCnt
  logFile~lineout(outTxt)
+ outTxt = date('S') time('n') 'End Program Execution'
+ logFile~lineout(outTxt)
  exit smdRC
  
 end
@@ -184,7 +186,22 @@ do sdirCount = 1 to dirCount
 	    end
 	  end
 	  iterate
-    end	
+    end
+	
+/*
+  The next code block uses an outer and inner loop to compare the entries in 
+  the source and target directories. If the file appears to be a temporary
+  file we skip it. The files appear to start with ~. If the source and target
+  file names match, we exit the inner loop. If we fall out of the inner loop
+  without a match, we check the inner loop control variable to see if it has
+  been incremented beyonf the control limit. If it has, then we have a file
+  that is in the source file system and not the target file system, so we need
+  to construct the target file system path and name and then copy it. If the
+  inner control loop variable has not exceeded the inner loop control limit,
+  the file names matched and we need to check the other attributes. If they 
+  are equal the file does not need to be copied. If we get a mismatch we need
+  to opy the file.
+*/	
 
   do oPoint = 1 to SFL.0
 
