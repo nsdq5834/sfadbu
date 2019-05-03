@@ -5,6 +5,7 @@
    Revision 1	02/14/2019
    Revision 2   04/25/2019
    Revision 3   04/27/2019
+   Revision 4   05/03/2019
    
    This is a simple homegrown backup utility program. It reads a list of
    high level directories that are to be backed up. It builds the list of
@@ -145,6 +146,8 @@ do sdirCnt = 1 to dirCount
  if smdRC = 0 then
    do
      FoldersCreated = FoldersCreated + 1
+	 outTxt = date('S') time('n') targetDlist.sdirCnt 'Folder created'
+     logFile~lineout(outTxt)
      iterate
    end	 
  
@@ -182,7 +185,9 @@ do sdirCount = 1 to dirCount
 		  end
         else
         do	
-          FilesCopied = FilesCopied + 1		
+          FilesCopied = FilesCopied + 1
+          outTxt = date('S') time('n') targetFile 'copied'
+          logFile~lineout(outTxt)		  
 	    end
 	  end
 	  iterate
@@ -228,6 +233,8 @@ do sdirCount = 1 to dirCount
 	    tflFname = BackupDirectory || tflFname
 	    sfcRC = SysFileCopy(sflFname,tflFname)
 	    FilesCopied = FilesCopied + 1
+		outTxt = date('S') time('n') tflFname 'copied'
+        logFile~lineout(outTxt)
         iterate	
       end
   
@@ -238,7 +245,9 @@ do sdirCount = 1 to dirCount
     do
 	  sfdRC = SysFileDelete(tflFname)
 	  sfcRC = SysFileCopy(sflFname,tflFname)
-      FilesCopied = FilesCopied + 1	  
+      FilesCopied = FilesCopied + 1
+      outTxt = date('S') time('n') tflFname 'copied'
+      logFile~lineout(outTxt)	  
 	  iterate
     end
 
