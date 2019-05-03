@@ -99,7 +99,7 @@ do dPoint = 1 to dirCount
 end
 
 /*
-  Build the list of source and target directories.
+  Build the list of source and target directories we will process.
 */
 
 outTxt = date('S') time('n') 'Build target directory list'
