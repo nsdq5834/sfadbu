@@ -6,6 +6,7 @@
    Revision 2   04/25/2019
    Revision 3   04/27/2019
    Revision 4   05/03/2019
+   Revision 5   05/05/2019
    
    This is a simple homegrown backup utility program. It reads a list of
    high level directories that are to be backed up. It builds the list of
@@ -23,6 +24,7 @@
 */
 
 FileInName = 'SourceDirectories.txt'
+FileInExcl = 'SourceDirectoriesExclude.txt'
 BackupDirectory = 'D:\Asus SyncFolder\@BU\'
 
 /* Now create the log file name using date and time functions.                */
@@ -39,6 +41,7 @@ FileOutName = 'C:\SFADBU\' || FileOutName
 */
 
 inTXTfile = .stream~new(FileInName)
+inEXCfile = .stream~new(FileInExcl)
 logFile = .stream~new(FileOutName)
 
 logFile~open('WRITE')
@@ -46,19 +49,51 @@ logFile~open('WRITE')
 outTxt = date('S') time('n') 'Begin program execution'
 logFile~lineout(outTxt)
 
+/* Open our two input files.                                                  */
+
+inTXTfile~open('READ')
+inEXCfile~open('READ')
+
 /* initialize some variables.                                                 */
 
 dCount = 0
+eCount = 0
 dirList. = ''
+DirToExclude. = ''
+DirToBackup. = ''
 FoldersCreated = 0
 FilesCopied = 0
 
-/* Loop through the file reading the list of directories to be backed up      */
+/* Loop through the file reading the list of directories to be excluded.      */
+
+do while inEXCfile~lines \= 0
+  inBuff = inEXCfile~linein
+  eCount = eCount + 1
+  DirToExclude.eCount = strip(inBuff,"B")
+end
+
+inEXCfile~close
+
+/* Loop through the file reading the list of directories to be backed up. We 
+   will check the exclude list as we build our list of directories to be backed
+   up.
+*/
 
 do while inTXTfile~lines \= 0
   inBuff = inTXTfile~linein
-  dCount = dCount + 1
-  DirToBackup.dCount = strip(inBuff,"B")
+  AddToBackupList = 1
+  do ePoint = 1 to eCount
+    if strip(inBuff,"B") = DirToExclude.ePoint then
+	  do
+	    AddToBackupList = 0
+	    leave ePoint
+	end  
+  end ePoint
+  if AddToBackupList then
+    do
+      dCount = dCount + 1
+      DirToBackup.dCount = strip(inBuff,"B")
+	end  
 end
 
 /*
@@ -67,6 +102,8 @@ end
 */
 
 outTxt = date('S') time('n') 'Number of base directories to process =' dCount
+logFile~lineout(outTxt)
+outTxt = date('S') time('n') 'Number directories to exclude =' eCount
 logFile~lineout(outTxt)
 
 
