@@ -81,20 +81,11 @@ inEXCfile~close
 
 do while inTXTfile~lines \= 0
   inBuff = inTXTfile~linein
-  AddToBackupList = 1
-  do ePoint = 1 to eCount
-    if strip(inBuff,"B") = DirToExclude.ePoint then
-	  do
-	    AddToBackupList = 0
-	    leave ePoint
-	end  
-  end ePoint
-  if AddToBackupList then
-    do
-      dCount = dCount + 1
-      DirToBackup.dCount = strip(inBuff,"B")
-	end  
-end
+  dCount = dCount + 1
+  DirToBackup.dCount = strip(inBuff,"B")
+end  
+
+inTXTfile~close
 
 /*
   Write a message to the log detailing the base number of directories we are
@@ -120,6 +111,27 @@ do dPoint = 1 to dCount
  call EnumDirect
 end
 
+DirToBackup. = dirList.
+dirList. = ''
+
+dPoint = 0
+
+do basePoint = 1 to dirCount
+  AddFileToBackup = 1 
+  do exclPoint = 1 to eCount
+    if DirToBackup.basePoint = DirToExclude.exclPoint then
+	  do
+	    AddFileToBackup = 0
+		leave exclPoint
+	  end
+  end exclPoint
+  if AddFileToBackup then
+    do
+	  dPoint = dPoint + 1
+	  dirList.dPoint = DirToBackup.basePoint
+	end
+end basePoint
+
 /*
   Write a message to the log detailing the total number of directories that we
   are going to try to process.  At this point, the dirList stem variable con-
@@ -127,8 +139,10 @@ end
   source directories.
 */
 
-outTxt = date('S') time('n') 'Total # directories to process =' dirCount
+outTxt = date('S') time('n') 'Total # directories to process =' dPoint
 logFile~lineout(outTxt)
+
+dirCount = dPoint
 
 do dPoint = 1 to dirCount
   outTxt = date('S') time('n') dirList.dPoint
