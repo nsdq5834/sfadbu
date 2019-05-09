@@ -7,6 +7,7 @@
    Revision 3   04/27/2019
    Revision 4   05/03/2019
    Revision 5   05/05/2019
+   Revision 5   05/09/2019
    
    This is a simple homegrown backup utility program. It reads a list of
    high level directories that are to be backed up. It builds the list of
@@ -15,13 +16,22 @@
    the directories on both the source and target. If the files and their
    attributes do not match, the file is copied. If a file exists on the
    source but not the target it is copied. Messages are written to a log
-   file to track program execution.   
+   file to track program execution.
 
-  Begin by identifying the input file that contains the list of the base
+   See if we were passed an argument.  If so, see if it is equal to the
+   word debug. If it is, set a logic flag that we will use to control the
+   messages we will write to our log file.   
+
+   Next identify the input file that contains the list of the base
   directories/folders that we want to make backups from. Create a unique
   file name that we can use for our log file that will track the programs
   execution.
 */
+
+arg passedValue
+
+if passedValue = 'DEBUG' then
+  debugFlag = 1
 
 FileInName = 'SourceDirectories.txt'
 FileInExcl = 'SourceDirectoriesExclude.txt'
@@ -144,10 +154,13 @@ logFile~lineout(outTxt)
 
 dirCount = dPoint
 
-do dPoint = 1 to dirCount
-  outTxt = date('S') time('n') dirList.dPoint
-  logFile~lineout(outTxt)
-end
+if debugFlag then
+  do
+    do dPoint = 1 to dirCount
+      outTxt = date('S') time('n') dirList.dPoint
+      logFile~lineout(outTxt)
+   end dPoint
+  end 
 
 /*
   Build the list of source and target directories we will process.
@@ -172,10 +185,13 @@ logFile~lineout(outTxt)
   Output the list of target directories that we will attempt to process.
 */
 
-do sdirCnt = 1 to dirCount
-  outTxt = date('S') time('n') targetDlist.sdirCnt
-  logFile~lineout(outTxt)
-end
+if debugFlag then
+  do
+    do sdirCnt = 1 to dirCount
+      outTxt = date('S') time('n') targetDlist.sdirCnt
+      logFile~lineout(outTxt)
+    end sdirCnt
+  end
 
 /*
   At this point the list of source directories is contained in the 
