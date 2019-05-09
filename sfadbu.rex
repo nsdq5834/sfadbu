@@ -27,6 +27,7 @@
   file name that we can use for our log file that will track the programs
   execution.
 */
+debugFlag = 0
 
 arg passedValue
 
@@ -220,6 +221,8 @@ do sdirCnt = 1 to dirCount
  
  outTxt = date('S') time('n') 'Return code from SysMkDir =' smdRC 'for' targetDlist.sdirCnt
  logFile~lineout(outTxt)
+ outTxt = date('S') time('n') SysGetErrortext(smdRC)
+ logFile~lineout(outTxt)
  outTxt = date('S') time('n') 'End Program Execution'
  logFile~lineout(outTxt)
  exit smdRC
@@ -248,6 +251,8 @@ do sdirCount = 1 to dirCount
 	    if sfcRC \= 0 then
 	      do
 	        outTxt = date('S') time('n') 'SysFileCopy Error =' sfcRC sourceFile targetFile
+	        logFile~lineout(outTxt)
+	        outTxt = date('S') time('n') SysGetErrortext(sfcRC)
 	        logFile~lineout(outTxt)
 		  end
         else
