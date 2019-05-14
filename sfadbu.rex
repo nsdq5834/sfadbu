@@ -47,6 +47,17 @@ if sfeRC \= 0 then
   end
 
 configFile = .stream~new(ConfigFileName)
+configFile=open('READ')
+
+/* Loop through the configuration file picking up parameters.                        */
+
+do while configFile~lines \= 0
+  inBuff = configFile~linein
+  inBuff = strip(inBuff,'B')
+  parse var inBuff parmDir '=' parmValue
+end
+
+inEXCfile~close
 
 
 FileInName = 'SourceDirectories.txt'
