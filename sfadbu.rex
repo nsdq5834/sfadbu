@@ -8,6 +8,7 @@
    Revision 4   05/03/2019
    Revision 5   05/05/2019
    Revision 5   05/09/2019
+   Revision 6   05/14/2019
    
    This is a simple homegrown backup utility program. It reads a list of
    high level directories that are to be backed up. It builds the list of
@@ -33,6 +34,20 @@ arg passedValue
 
 if passedValue = 'DEBUG' then
   debugFlag = 1
+  
+ConfigFileName = 'config.txt'
+
+sfeRC = SysFileExists(ConfigFileName)
+
+if sfeRC \= 0 then
+  do
+    say 'Unable to locate config.txt'
+	say 'Terminating program execution.'
+	exit sfeRC
+  end
+
+configFile = .stream~new(ConfigFileName)
+
 
 FileInName = 'SourceDirectories.txt'
 FileInExcl = 'SourceDirectoriesExclude.txt'
