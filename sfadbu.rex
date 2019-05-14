@@ -34,12 +34,12 @@ arg passedValue
 
 if passedValue = 'DEBUG' then
   debugFlag = 1
-  
+
 ConfigFileName = 'config.txt'
 
 sfeRC = SysFileExists(ConfigFileName)
 
-if sfeRC \= 0 then
+if sfeRC = 0 then
   do
     say 'Unable to locate config.txt'
 	say 'Terminating program execution.'
@@ -47,22 +47,63 @@ if sfeRC \= 0 then
   end
 
 configFile = .stream~new(ConfigFileName)
-configFile=open('READ')
+configFile~open('READ')
 
-/* Loop through the configuration file picking up parameters.                        */
+/*
+  Loop through the configuration file picking up parameters. If we encounter
+  an unknown keyword we will issue a message and exit the program.
+*/
 
 do while configFile~lines \= 0
   inBuff = configFile~linein
   inBuff = strip(inBuff,'B')
   parse var inBuff parmDir '=' parmValue
+  select
+    when parmDir = 'FileInName' then
+	  FileInName = parmValue
+	when parmDir = 'FileInExcl' then
+	  FileInExcl = parmValue
+	when parmDir = 'BackupDirectory' then
+	  BackupDirectory = parmValue
+	otherwise
+	  do
+	    say 'Unrecognized configuration keyword **' inBuff '**'
+		configFile~close
+		exit 1000;
+	  end
+  end
 end
 
-inEXCfile~close
+/*
+  Make sure that each of the files exist.
+*/
 
+sfeRC = SysFileExists(FileInName)
 
-FileInName = 'SourceDirectories.txt'
-FileInExcl = 'SourceDirectoriesExclude.txt'
-BackupDirectory = 'D:\Asus SyncFolder\@BU\'
+if sfeRC = 0 then
+  do
+    say 'Unable to locate ' FileInName
+	say 'Terminating program execution.'
+	exit sfeRC
+  end
+
+sfeRC = SysFileExists(FileExclName)
+
+if sfeRC = 0 then
+  do
+    say 'Unable to locate ' FileExclName
+	say 'Terminating program execution.'
+	exit sfeRC
+  end
+
+sfeRC = SysFileExists(BackupDirectory)
+
+if sfeRC = 0 then
+  do
+    say 'Unable to locate ' BackupDirectory
+	say 'Terminating program execution.'
+	exit sfeRC
+  end
 
 /* Now create the log file name using date and time functions.                */
 
