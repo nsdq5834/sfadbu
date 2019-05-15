@@ -37,9 +37,7 @@ if passedValue = 'DEBUG' then
 
 ConfigFileName = 'config.txt'
 
-sfeRC = SysFileExists(ConfigFileName)
-
-if sfeRC = 0 then
+if \ SysFileExists(ConfigFileName) then
   do
     say 'Unable to locate config.txt'
 	say 'Terminating program execution.'
@@ -55,9 +53,12 @@ configFile~open('READ')
 */
 
 do while configFile~lines \= 0
-  inBuff = configFile~linein
-  inBuff = strip(inBuff,'B')
+
+  inBuff = strip(configFile~linein,'B')
   parse var inBuff parmDir '=' parmValue
+  parmDir = strip(parmDir,'B')
+  parmValue = strip(parmValue,'B')
+  
   select
     when parmDir = 'FileInName' then
 	  FileInName = parmValue
@@ -69,40 +70,35 @@ do while configFile~lines \= 0
 	  do
 	    say 'Unrecognized configuration keyword **' inBuff '**'
 		configFile~close
-		exit 1000;
+		exit 1000
 	  end
   end
+  
 end
 
 /*
   Make sure that each of the files exist.
 */
 
-sfeRC = SysFileExists(FileInName)
-
-if sfeRC = 0 then
+if \ SysFileExists(FileInName) then
   do
     say 'Unable to locate ' FileInName
 	say 'Terminating program execution.'
-	exit sfeRC
+	exit 1000
   end
 
-sfeRC = SysFileExists(FileExclName)
-
-if sfeRC = 0 then
+if \ SysFileExists(FileInExcl) then
   do
-    say 'Unable to locate ' FileExclName
+    say 'Unable to locate ' FileInExcl
 	say 'Terminating program execution.'
-	exit sfeRC
+	exit 1000
   end
 
-sfeRC = SysFileExists(BackupDirectory)
-
-if sfeRC = 0 then
+if \ SysFileExists(BackupDirectory) then
   do
     say 'Unable to locate ' BackupDirectory
 	say 'Terminating program execution.'
-	exit sfeRC
+	exit 1000
   end
 
 /* Now create the log file name using date and time functions.                */
@@ -325,7 +321,7 @@ do sdirCount = 1 to dirCount
         else
         do	
           FilesCopied = FilesCopied + 1
-          outTxt = date('S') time('n') targetFile 'copied'
+          outTxt = date('S') time('n') sourceFile 'copied'
           logFile~lineout(outTxt)		  
 	    end
 	  end
@@ -372,7 +368,7 @@ do sdirCount = 1 to dirCount
 	    tflFname = BackupDirectory || tflFname
 	    sfcRC = SysFileCopy(sflFname,tflFname)
 	    FilesCopied = FilesCopied + 1
-		outTxt = date('S') time('n') tflFname 'copied'
+		outTxt = date('S') time('n') sflFname 'copied'
         logFile~lineout(outTxt)
         iterate	
       end
@@ -385,7 +381,7 @@ do sdirCount = 1 to dirCount
 	  sfdRC = SysFileDelete(tflFname)
 	  sfcRC = SysFileCopy(sflFname,tflFname)
       FilesCopied = FilesCopied + 1
-      outTxt = date('S') time('n') tflFname 'copied'
+      outTxt = date('S') time('n') sflFname 'copied'
       logFile~lineout(outTxt)	  
 	  iterate
     end
