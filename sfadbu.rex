@@ -9,6 +9,7 @@
    Revision 5   05/05/2019
    Revision 5   05/09/2019
    Revision 6   05/14/2019
+   Revision 7   05/16/2016
    
    This is a simple homegrown backup utility program. It reads a list of
    high level directories that are to be backed up. It builds the list of
@@ -34,14 +35,18 @@ arg passedValue
 
 if passedValue = 'DEBUG' then
   debugFlag = 1
-
+/*
+  The following two values are hard coded. They could be externalized as passed
+  in values.
+*/
 ConfigFileName = 'config.txt'
+LogDir = 'C:\SFADBU\'
 
 if \ SysFileExists(ConfigFileName) then
   do
     say 'Unable to locate config.txt'
 	say 'Terminating program execution.'
-	exit sfeRC
+	exit 1000
   end
 
 configFile = .stream~new(ConfigFileName)
@@ -76,6 +81,8 @@ do while configFile~lines \= 0
   
 end
 
+configFile~close
+
 /*
   Make sure that each of the files exist.
 */
@@ -106,8 +113,7 @@ if \ SysFileExists(BackupDirectory) then
 currentTime = time('n')
 parse var currentTime currentHour ':' currentMinute ':' currentSecond
 currentTime = currentHour || currentMinute || currentSecond
-FileOutName = 'Log_' || date('S') || '_' || currentTime || '.txt'
-FileOutName = 'C:\SFADBU\' || FileOutName
+FileOutName = LogDir ||'Log_' || date('S') || '_' || currentTime || '.txt'
 
 /*
   Set up the stream objects so that we can then use them to access the
@@ -141,9 +147,8 @@ FilesCopied = 0
 /* Loop through the file reading the list of directories to be excluded.      */
 
 do while inEXCfile~lines \= 0
-  inBuff = inEXCfile~linein
   eCount = eCount + 1
-  DirToExclude.eCount = strip(inBuff,"B")
+  DirToExclude.eCount = strip(inEXCfile~linein,'B')
 end
 
 inEXCfile~close
@@ -154,9 +159,8 @@ inEXCfile~close
 */
 
 do while inTXTfile~lines \= 0
-  inBuff = inTXTfile~linein
   dCount = dCount + 1
-  DirToBackup.dCount = strip(inBuff,"B")
+  DirToBackup.dCount = strip(inTXTfile~linein,'B')
 end  
 
 inTXTfile~close
@@ -313,7 +317,7 @@ do sdirCount = 1 to dirCount
 	    sfcRC = SysFileCopy(sourceFile,targetFile)
 	    if sfcRC \= 0 then
 	      do
-	        outTxt = date('S') time('n') 'SysFileCopy Error =' sfcRC sourceFile targetFile
+	        outTxt = date('S') time('n') 'SysFileCopy Error =' sfcRC sourceFile
 	        logFile~lineout(outTxt)
 	        outTxt = date('S') time('n') SysGetErrortext(sfcRC)
 	        logFile~lineout(outTxt)
@@ -397,7 +401,6 @@ outTxt = date('S') time('n') 'End program execution'
 logFile~lineout(outTxt)
 
 logFile~close
-inTXTfile~close
 
 exit
 
