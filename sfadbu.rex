@@ -371,8 +371,15 @@ do sdirCount = 1 to dirCount
 	    parse var sourceFile sDrive '\' tflFname
 	    tflFname = BackupDirectory || tflFname
 	    sfcRC = SysFileCopy(sflFname,tflFname)
-	    FilesCopied = FilesCopied + 1
-		outTxt = date('S') time('n') sflFname 'copied'
+		if sfcRC = 0 then
+		  do
+		    FilesCopied = FilesCopied + 1
+			outTxt = date('S') time('n') sflFname 'copied'
+		  end
+		else
+          do
+		    outTxt = date('S') time('n') 'SysFileCopy Error =' sfcRC sflFname
+          end		  
         logFile~lineout(outTxt)
         iterate	
       end
@@ -383,9 +390,25 @@ do sdirCount = 1 to dirCount
   else
     do
 	  sfdRC = SysFileDelete(tflFname)
+	  
+	  if sfdRC \= 0 then
+		do
+		  outTxt = date('S') time('n') 'SysFileDelete Error =' sfdRC tflFname
+		  logFile~lineout(outTxt)
+		end
+		
 	  sfcRC = SysFileCopy(sflFname,tflFname)
-      FilesCopied = FilesCopied + 1
-      outTxt = date('S') time('n') sflFname 'copied'
+	  
+	  if sfcRC = 0 then
+	    do
+		  FilesCopied = FilesCopied + 1
+		  outTxt = date('S') time('n') sflFname 'copied'
+		end
+	  else
+        do
+		  outTxt = date('S') time('n') 'SysFileCopy Error =' sfcRC sflFname
+        end
+		
       logFile~lineout(outTxt)	  
 	  iterate
     end
