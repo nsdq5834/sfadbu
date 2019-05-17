@@ -379,6 +379,8 @@ do sdirCount = 1 to dirCount
 		else
           do
 		    outTxt = date('S') time('n') 'SysFileCopy Error =' sfcRC sflFname
+			logFile~lineout(outTxt)
+			outTxt = date('S') time('n') SysGetErrortext(sfcRC)
           end		  
         logFile~lineout(outTxt)
         iterate	
@@ -417,6 +419,11 @@ do sdirCount = 1 to dirCount
   
 end sdirCount
 
+/*
+  Write out our closing messages to our log file, close up the log file
+  and exit the program.
+*/
+
 outTxt = date('S') time('n') 'Number of Files copied =' FilesCopied
 logFile~lineout(outTxt)
 
@@ -454,7 +461,8 @@ return
 
 /*
   The IsoFname function takes a fully qualified file name and strips off the
-  path information so we are left with the simple file name.
+  path information so we are left with the simple file name. Since we are 
+  running on a Windows platform, we will back scan looking for a \ character.
 */
 
 IsoFname: procedure
