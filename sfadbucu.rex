@@ -1,25 +1,22 @@
 /* Rexx program
 
-   sfadbu.rex
+   sfadbucu.rex
    Base code	05/18/2019
    
-   This is a simple homegrown backup utility program. It reads a list of
-   high level directories that are to be backed up. It builds the list of
-   all subdirectories. If a directory/sub-directory does not exist in the
-   target file system it is created. A file list is built for each of the 
-   the directories on both the source and target. If the files and their
-   attributes do not match, the file is copied. If a file exists on the
-   source but not the target it is copied. Messages are written to a log
-   file to track program execution.
+   This is a simple homegrown backup utility program that is used in con-
+   junction with sfadbu. sfadbucu is a clean up utility progam that can be
+   executed at whatever frequency is needed. It compares the contents of the
+   target or backup to the source. If a file is present in the target and not
+   in the source it will be deleted from the target.
 
    See if we were passed an argument.  If so, see if it is equal to the
    word debug. If it is, set a logic flag that we will use to control the
    messages we will write to our log file.   
 
    Next identify the input file that contains the list of the base
-  directories/folders that we want to make backups from. Create a unique
-  file name that we can use for our log file that will track the programs
-  execution.
+   directories/folders that we want to make backups from. Create a unique
+   file name that we can use for our log file that will track the programs
+   execution.
 */
 debugFlag = 0
 
@@ -257,7 +254,7 @@ if debugFlag then
   exist. If they do not, then we will attempt to create the directory.
   If we encounter an error in the create, we will write a message to
   the log file and then terminate the exicution of the program.
-*/
+
 
 do sdirCnt = 1 to dirCount
 
@@ -287,6 +284,7 @@ end
 
 outTxt = date('S') time('n') 'Number of Directories/Folders created =' FoldersCreated
 logFile~lineout(outTxt)
+*/
 
 do sdirCount = 1 to dirCount
  
@@ -295,6 +293,8 @@ do sdirCount = 1 to dirCount
   
   sfRC = SysFileTree(sourceDlist.sdirCount, SFL, 'F') 
   tfRC = SysFileTree(targetDlist.sdirCount, TFL, 'F')
+
+/*
 
   if TFL.0 = 0 then
     do
@@ -320,7 +320,7 @@ do sdirCount = 1 to dirCount
 	  end
 	  iterate
     end
-	
+*/	
 /*
   The next code block uses an outer and inner loop to compare the entries in 
   the source and target directories. If the file appears to be a temporary
@@ -334,7 +334,12 @@ do sdirCount = 1 to dirCount
   the file names matched and we need to check the other attributes. If they 
   are equal the file does not need to be copied. If we get a mismatch we need
   to opy the file.
-*/	
+*/
+
+  do oPoint = 1 to TFL.0
+    do iPoint = 1 to SFL.0
+	end
+  end
 
   do oPoint = 1 to SFL.0
 
