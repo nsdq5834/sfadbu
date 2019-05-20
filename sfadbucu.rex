@@ -282,6 +282,10 @@ do sdirCount = 1 to dirCount
 
 end sdirCount
 
+/*
+  Issue final messages and close up the log file and then exit.
+*/
+
 outTxt = date('S') time('n') 'Number of Files deleted =' FilesDeleted
 logFile~lineout(outTxt)
 
