@@ -96,7 +96,7 @@ if \ SysFileExists(BackupDirectory) then
 currentTime = time('n')
 parse var currentTime currentHour ':' currentMinute ':' currentSecond
 currentTime = currentHour || currentMinute || currentSecond
-FileOutName = 'Log_' || date('S') || '_' || currentTime || '.txt'
+FileOutName = 'Log_cu_' || date('S') || '_' || currentTime || '.txt'
 FileOutName = 'C:\SFADBU\' || FileOutName
 
 /*
@@ -126,7 +126,7 @@ dirList. = ''
 DirToExclude. = ''
 DirToBackup. = ''
 FoldersCreated = 0
-FilesCopied = 0
+FilesDeleted = 0
 
 /* Loop through the file reading the list of directories to be excluded.      */
 
@@ -247,45 +247,6 @@ if debugFlag then
     end sdirCnt
   end
 
-/*
-  At this point the list of source directories is contained in the 
-  sourceDlist stem and the target directories are contained in the
-  targetDlist stem.  We will check to see if the target directories
-  exist. If they do not, then we will attempt to create the directory.
-  If we encounter an error in the create, we will write a message to
-  the log file and then terminate the exicution of the program.
-
-
-do sdirCnt = 1 to dirCount
-
- sfeRC = SysFileExists(targetDlist.sdirCnt)
- 
- if sfeRC = 1 then iterate
- 
- smdRC = SysMkDir(targetDlist.sdirCnt)
- 
- if smdRC = 0 then
-   do
-     FoldersCreated = FoldersCreated + 1
-	 outTxt = date('S') time('n') targetDlist.sdirCnt 'Folder created'
-     logFile~lineout(outTxt)
-     iterate
-   end	 
- 
- outTxt = date('S') time('n') 'Return code from SysMkDir =' smdRC 'for' targetDlist.sdirCnt
- logFile~lineout(outTxt)
- outTxt = date('S') time('n') SysGetErrortext(smdRC)
- logFile~lineout(outTxt)
- outTxt = date('S') time('n') 'End Program Execution'
- logFile~lineout(outTxt)
- exit smdRC
- 
-end
-
-outTxt = date('S') time('n') 'Number of Directories/Folders created =' FoldersCreated
-logFile~lineout(outTxt)
-*/
-
 do sdirCount = 1 to dirCount
  
   sourceDlist.sdirCount = sourceDlist.sdirCount || '\*.*'  
@@ -294,108 +255,40 @@ do sdirCount = 1 to dirCount
   sfRC = SysFileTree(sourceDlist.sdirCount, SFL, 'F') 
   tfRC = SysFileTree(targetDlist.sdirCount, TFL, 'F')
 
-/*
-
-  if TFL.0 = 0 then
-    do
-      do cntSFL = 1 to SFL.0
-	    parse var SFL.cntSFL . . . . sourceFile
-	    sourceFile = strip(sourceFile,'B')
-	    parse var sourceFile sDrive '\' targetFile
-	    targetFile = BackupDirectory || targetFile
-	    sfcRC = SysFileCopy(sourceFile,targetFile)
-	    if sfcRC \= 0 then
-	      do
-	        outTxt = date('S') time('n') 'SysFileCopy Error =' sfcRC sourceFile targetFile
-	        logFile~lineout(outTxt)
-	        outTxt = date('S') time('n') SysGetErrortext(sfcRC)
-	        logFile~lineout(outTxt)
-		  end
-        else
-        do	
-          FilesCopied = FilesCopied + 1
-          outTxt = date('S') time('n') sourceFile 'copied'
-          logFile~lineout(outTxt)		  
-	    end
-	  end
-	  iterate
-    end
-*/	
-/*
-  The next code block uses an outer and inner loop to compare the entries in 
-  the source and target directories. If the file appears to be a temporary
-  file we skip it. The files appear to start with ~. If the source and target
-  file names match, we exit the inner loop. If we fall out of the inner loop
-  without a match, we check the inner loop control variable to see if it has
-  been incremented beyonf the control limit. If it has, then we have a file
-  that is in the source file system and not the target file system, so we need
-  to construct the target file system path and name and then copy it. If the
-  inner control loop variable has not exceeded the inner loop control limit,
-  the file names matched and we need to check the other attributes. If they 
-  are equal the file does not need to be copied. If we get a mismatch we need
-  to opy the file.
-*/
-
   do oPoint = 1 to TFL.0
+  
+    parse var TFL.oPoint tflDate tflTime tflSize tflAttrib tflFname  
+    tflFname = strip(tflFname,'B')
+    targetFname = IsoFname(tflFname)
+	
     do iPoint = 1 to SFL.0
-	end
-  end
-
-  do oPoint = 1 to SFL.0
-
-    parse var SFL.oPoint sflDate sflTime sflSize sflAttrib sflFname  
-    sflFname = strip(sflFname,'B')
-    sourceFname = IsoFname(sflFname)
-    if left(sourceFname,1) = '~' then iterate
-  
-    do iPoint = 1 to TFL.0
-  
-      parse var TFL.iPoint tflDate tflTime tflSize tflAttrib tflFname
-      tflFname = strip(tflFname,'B')
-      targetFname = IsoFname(tflFname)
-
-    if sourceFname = targetFname then leave iPoint
-  
-    end iPoint
-  
-    if iPoint = TFL.0 + 1 then
-      do
-	    parse var SFL.oPoint . . . . sourceFile
-	    sourceFile = strip(sourceFile,'B')
-	    parse var sourceFile sDrive '\' tflFname
-	    tflFname = BackupDirectory || tflFname
-	    sfcRC = SysFileCopy(sflFname,tflFname)
-	    FilesCopied = FilesCopied + 1
-		outTxt = date('S') time('n') sflFname 'copied'
+	
+      parse var SFL.iPoint dflDate sflTime sflSize sflAttrib sflFname
+      sflFname = strip(sflFname,'B')
+      sourceFname = IsoFname(sflFname)
+	  if targetFname = sourceFname then leave iPoint
+	  
+	end iPoint
+	
+	if iPoint = SFL.0 + 1 then
+	  do
+	    SysFileDelete(tflFname)
+		FilesDeleted = FilesDeleted + 1
+		outTxt = date('S') time('n') 'Deleted' tflFname
         logFile~lineout(outTxt)
-        iterate	
-      end
-  
-  if sourceFname = targetFname & ,
-   sflDate = tflDate & sflTime = tflTime & sflSize = tflSize then
-     iterate
-  else
-    do
-	  sfdRC = SysFileDelete(tflFname)
-	  sfcRC = SysFileCopy(sflFname,tflFname)
-      FilesCopied = FilesCopied + 1
-      outTxt = date('S') time('n') sflFname 'copied'
-      logFile~lineout(outTxt)	  
-	  iterate
-    end
-
+	  end	
+	
   end oPoint  
-  
+
 end sdirCount
 
-outTxt = date('S') time('n') 'Number of Files copied =' FilesCopied
+outTxt = date('S') time('n') 'Number of Files deleted =' FilesDeleted
 logFile~lineout(outTxt)
 
 outTxt = date('S') time('n') 'End program execution'
 logFile~lineout(outTxt)
 
 logFile~close
-inTXTfile~close
 
 exit
 
